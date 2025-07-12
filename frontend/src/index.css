@@ -1,0 +1,339 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+    background: linear-gradient(135deg, #0d9488 0%, #f97316 100%);
+    min-height: 100vh;
+  }
+  
+  * {
+    @apply border-gray-200;
+  }
+}
+
+@layer components {
+  .gradient-bg {
+    background: linear-gradient(135deg, #0d9488 0%, #f97316 100%);
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-600 hover:bg-secondary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-success-600 hover:bg-success-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-warning {
+    @apply bg-warning-600 hover:bg-warning-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-600 hover:bg-danger-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .status-online {
+    @apply relative;
+  }
+  
+  .status-online::before {
+    content: '';
+    @apply absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full animate-pulse;
+  }
+  
+  .metric-card {
+    @apply bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/20 transition-all duration-300 hover:shadow-xl hover:scale-105;
+  }
+  
+  .alert-success {
+    @apply bg-success-500/20 backdrop-blur-md border border-success-300/30 text-success-100 rounded-lg p-4;
+  }
+  
+  .alert-warning {
+    @apply bg-warning-500/20 backdrop-blur-md border border-warning-300/30 text-warning-100 rounded-lg p-4;
+  }
+  
+  .alert-danger {
+    @apply bg-danger-500/20 backdrop-blur-md border border-danger-300/30 text-danger-100 rounded-lg p-4;
+  }
+  
+  .alert-info {
+    @apply bg-primary-500/20 backdrop-blur-md border border-primary-300/30 text-primary-100 rounded-lg p-4;
+  }
+  
+  .card-glass {
+    @apply bg-white/15 backdrop-blur-lg border border-white/25 shadow-xl;
+  }
+  
+  .card-dark-glass {
+    @apply bg-black/20 backdrop-blur-lg border border-white/10 shadow-xl;
+  }
+  
+  .text-glass {
+    @apply text-white/90;
+  }
+  
+  /* Enhanced spacing utilities */
+  .section-padding {
+    @apply px-4 py-8 sm:px-6 lg:px-8;
+  }
+  
+  .content-spacing {
+    @apply space-y-6;
+  }
+  
+  .header-spacing {
+    @apply mb-8 lg:mb-12;
+  }
+  
+  /* Better text hierarchy */
+  .text-heading-xl {
+    @apply text-4xl lg:text-5xl font-bold text-white leading-tight;
+  }
+  
+  .text-heading-lg {
+    @apply text-3xl lg:text-4xl font-bold text-white leading-tight;
+  }
+  
+  .text-heading-md {
+    @apply text-2xl lg:text-3xl font-semibold text-white leading-snug;
+  }
+  
+  .text-subtitle {
+    @apply text-lg text-primary-200 leading-relaxed;
+  }
+  
+  .text-description {
+    @apply text-primary-300 leading-relaxed;
+  }
+  
+  /* Enhanced card layouts */
+  .card-enhanced {
+    @apply card-glass rounded-2xl p-6 lg:p-8;
+  }
+  
+  .card-header {
+    @apply mb-6 pb-6 border-b border-white/10;
+  }
+  
+  .card-content {
+    @apply space-y-4;
+  }
+  
+  /* Better button spacing */
+  .btn-group {
+    @apply flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4;
+  }
+  
+  .btn-enhanced {
+    @apply px-6 py-3 text-base font-medium transition-all duration-200;
+  }
+  
+  /* Improved form layouts */
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-primary-200;
+  }
+  
+  .form-input {
+    @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  /* Status indicators */
+  .status-online {
+    @apply flex items-center space-x-2 text-success-300;
+  }
+  
+  .status-offline {
+    @apply flex items-center space-x-2 text-danger-300;
+  }
+  
+  .status-dot {
+    @apply w-3 h-3 rounded-full animate-pulse;
+  }
+  
+  /* Grid layouts */
+  .grid-responsive {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+  
+  .grid-cards {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+  }
+  
+  /* Enhanced shadows */
+  .shadow-modern {
+    @apply shadow-xl shadow-black/20;
+  }
+  
+  .shadow-glow {
+    @apply shadow-2xl shadow-primary-500/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-reverse {
+    @apply bg-gradient-to-r from-secondary-600 to-primary-600 bg-clip-text text-transparent;
+  }
+  
+  .bg-gradient-modern {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 25%, #f97316 75%, #ea580c 100%);
+  }
+  
+  .glass-modern {
+    @apply backdrop-blur-xl bg-white/20 border border-white/30 shadow-2xl;
+  }
+  
+  .border-gradient {
+    border-image: linear-gradient(45deg, #0d9488, #f97316) 1;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px #0d9488, 0 0 10px #0d9488, 0 0 15px #0d9488;
+    }
+    to {
+      box-shadow: 0 0 10px #f97316, 0 0 20px #f97316, 0 0 30px #f97316;
+    }
+  }
+}
+
+  /* Professional theme enhancements */
+  .theme-professional {
+    @apply bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800;
+  }
+  
+  .corporate-gradient {
+    @apply bg-gradient-to-r from-slate-700 via-gray-700 to-slate-600;
+  }
+  
+  .professional-card {
+    @apply bg-white bg-opacity-5 backdrop-blur-xl border border-white border-opacity-10 shadow-2xl;
+  }
+  
+  .executive-text {
+    @apply text-gray-100 font-medium tracking-wide;
+  }
+  
+  .business-accent {
+    @apply text-blue-300 font-semibold;
+  }
+  
+  /* Enhanced metric cards for professional look */
+  .metric-card {
+    @apply bg-white bg-opacity-5 backdrop-blur-xl rounded-xl p-6 shadow-xl border border-white border-opacity-20 transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:bg-opacity-10;
+  }
+  
+  /* Professional button styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-blue-500 border-opacity-20;
+  }
+  
+  .btn-secondary {
+    @apply bg-white bg-opacity-10 hover:bg-opacity-15 text-white border border-white border-opacity-20 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:border-opacity-30;
+  }
+  
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 border border-red-500 border-opacity-20;
+  }
+  
+  /* Professional form elements */
+  .form-input-professional {
+    @apply w-full px-4 py-3 bg-white bg-opacity-5 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm;
+  }
+  
+  /* Enhanced glass effects */
+  .glass-professional {
+    @apply bg-white bg-opacity-5 backdrop-blur-2xl border border-white border-opacity-10 shadow-2xl;
+  }
+  
+  /* Status indicators with professional styling */
+  .status-indicator {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md border;
+  }
+  
+  .status-success {
+    @apply bg-emerald-500 bg-opacity-20 text-emerald-200 border-emerald-400 border-opacity-30;
+  }
+  
+  .status-warning {
+    @apply bg-amber-500 bg-opacity-20 text-amber-200 border-amber-400 border-opacity-30;
+  }
+  
+  .status-danger {
+    @apply bg-red-500 bg-opacity-20 text-red-200 border-red-400 border-opacity-30;
+  }
+  
+  .status-info {
+    @apply bg-blue-500 bg-opacity-20 text-blue-200 border-blue-400 border-opacity-30;
+  }
+  
+  /* Professional navigation */
+  .nav-professional {
+    @apply bg-white bg-opacity-5 backdrop-blur-xl border-b border-white border-opacity-10 shadow-lg;
+  }
+  
+  /* Corporate text hierarchy */
+  .heading-corporate {
+    @apply text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight;
+  }
+  
+  .subheading-corporate {
+    @apply text-xl lg:text-2xl font-semibold text-gray-200 tracking-wide;
+  }
+  
+  .body-corporate {
+    @apply text-gray-300 leading-relaxed tracking-wide;
+  }
+  
+  /* Professional data tables */
+  .table-professional {
+    @apply bg-white bg-opacity-5 backdrop-blur-lg border border-white border-opacity-10 rounded-lg overflow-hidden;
+  }
+  
+  .table-header {
+    @apply bg-white bg-opacity-10 text-gray-200 font-semibold text-sm tracking-wide;
+  }
+  
+  .table-row {
+    @apply border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors;
+  }
+  
+  /* Enhanced shadows for depth */
+  .shadow-professional {
+    @apply shadow-2xl;
+  }
+  
+  .shadow-elevated {
+    @apply shadow-xl;
+  }
