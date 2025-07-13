@@ -140,3 +140,19 @@ INFO:werkzeug:127.0.0.1 - - [13/Jul/2025 00:52:29] "GET /api/employees HTTP/1.1"
 INFO:werkzeug:127.0.0.1 - - [13/Jul/2025 00:52:29] "GET /api/safety/stats?start_date=2025-06-13T06:52:18.372Z&end_date=2025-07-13T06:52:18.372Z HTTP/1.1" 200 -
 INFO:werkzeug:127.0.0.1 - - [13/Jul/2025 00:52:29] "GET /api/employees HTTP/1.1" 200 -
 INFO:werkzeug:127.0.0.1 - - [13/Jul/2025 00:52:29] "GET /api/safety/stats?start_date=2025-06-13T06:52:18.374Z&end_date=2025-07-13T06:52:18.374Z HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/Users/dhruvthakkar/Desktop/cllg/bachelors/sem-6/INTEL_AI_PROJECT/backend/gunicorn.conf.py', reloading
+INFO:werkzeug: * Restarting with stat
+INFO:backend.mongodb_manager:✅ Connected to MongoDB: workforce_monitoring
+INFO:backend.mongodb_manager:✅ Collections setup complete
+INFO:backend.mongodb_manager:✅ Database indexes created successfully
+INFO:__main__:✅ MongoDB connected successfully
+INFO:__main__:Loaded 3 employees with face encodings for recognition
+INFO:__main__:✅ Real Face Recognition System initialized
+INFO:__main__:Safety detection classifiers loaded successfully
+INFO:__main__:✅ Real Safety Monitor initialized with computer vision
+INFO:__main__:🚀 Starting Workforce Monitoring System...
+INFO:__main__:📊 Dashboard: http://localhost:5001
+INFO:__main__:🔧 API: http://localhost:5001/api
+INFO:__main__:🔐 Default admin credentials: admin/admin123
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 939-533-255
