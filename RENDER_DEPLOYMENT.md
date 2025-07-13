@@ -1,306 +1,272 @@
-# Workforce Monitoring System - Render Deployment Guide
+# Render Deployment Guide
 
-This guide will help you deploy the Workforce Monitoring System to Render as a single integrated service.
+This guide will help you deploy your Flask backend to Render using Docker, optimized for memory efficiency.
 
-## 🚀 Deployment Architecture
+## 🐳 Docker Configuration
 
-The system is configured to deploy as a **single web service** on Render that:
-- Serves the React frontend from `/`
-- Serves the API from `/api/*`
-- Handles WebSocket connections from `/socket.io`
-- Uses MongoDB Atlas for database
-- Automatically builds and deploys on git push
+### Files Overview
 
-## 📋 Prerequisites
+- `backend/Dockerfile.render` - Production-optimized Dockerfile for Render
+- `backend/requirements.docker.txt` - Lightweight dependencies
+- `backend/gunicorn.conf.py` - Production server configuration
+- `backend/.dockerignore` - Excludes unnecessary files
 
-1. **Render Account**: Sign up at [render.com](https://render.com)
-2. **MongoDB Atlas**: Set up a free cluster at [mongodb.com](https://www.mongodb.com/atlas)
-3. **GitHub Repository**: Your code should be in a GitHub repository
+### Memory Optimization
 
-## 🔧 Step 1: MongoDB Atlas Setup
+The Docker setup is optimized for Render's memory constraints:
 
-### 1.1 Create MongoDB Atlas Cluster
+- **Multi-stage build** reduces final image size
+- **Lightweight dependencies** (removed heavy packages like torch/torchvision)
+- **Single worker process** to minimize memory usage
+- **opencv-python-headless** instead of full OpenCV
+- **Minimal system packages**
 
-1. Go to [MongoDB Atlas](https://cloud.mongodb.com)
-2. Create a new project or use existing
-3. Create a free cluster (M0 Sandbox)
-4. Wait for cluster to be created
+## 🚀 Render Deployment Steps
 
-### 1.2 Configure Database Access
+### 1. Prepare Your Repository
 
-1. Go to "Database Access" → "Add New Database User"
-2. Create username/password authentication
-3. Set database user privileges to "Read and write to any database"
-4. Note down the username and password
-
-### 1.3 Configure Network Access
-
-1. Go to "Network Access" → "Add IP Address" 
-2. Add `0.0.0.0/0` to allow access from anywhere (for Render)
-3. Or add specific Render IP ranges if you prefer
-
-### 1.4 Get Connection String
-
-1. Go to "Database" → "Connect" → "Connect your application"
-2. Copy the connection string (looks like):
+1. **Push to GitHub** (or GitLab/Bitbucket):
+   ```bash
+   git add .
+   git commit -m "Add Docker configuration for Render deployment"
+   git push origin main
    ```
-   mongodb+srv://username:password@cluster.mongodb.net/workforce_monitoring?retryWrites=true&w=majority
-   ```
-3. Replace `<username>` and `<password>` with your actual credentials
 
-## 🚀 Step 2: Render Deployment
+### 2. Create Web Service on Render
 
-### 2.1 Create New Web Service
+1. **Go to [Render Dashboard](https://dashboard.render.com/)**
 
-1. Go to [Render Dashboard](https://dashboard.render.com)
-2. Click "New" → "Web Service"
-3. Connect your GitHub repository
-4. Select the repository containing your workforce monitoring code
+2. **Click "New +" → "Web Service"**
 
-### 2.2 Configure Service Settings
+3. **Connect your repository**
 
-**Basic Settings:**
-- **Name**: `workforce-monitoring-system`
-- **Region**: Choose closest to your users
-- **Branch**: `main` (or your default branch)
-- **Build Command**: `./build.sh`
-- **Start Command**: `cd backend && gunicorn --config gunicorn.render.conf.py app_simple:app`
+4. **Configure the service:**
+   - **Name**: `workforce-monitoring-backend`
+   - **Environment**: `Docker`
+   - **Region**: Choose closest to your users
+   - **Branch**: `main`
+   - **Dockerfile Path**: `backend/Dockerfile.render`
+   - **Docker Build Context Directory**: `backend`
 
-**Advanced Settings:**
-- **Health Check Path**: `/api/health`
-- **Auto-Deploy**: Yes
+### 3. Environment Variables
 
-### 2.3 Configure Environment Variables
+Set these environment variables in Render:
 
-Add the following environment variables in Render:
-
-#### Required Variables:
+#### Required Variables
 ```bash
+# Flask Configuration
 FLASK_ENV=production
-DEBUG=False
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/workforce_monitoring?retryWrites=true&w=majority
-```
+DEBUG=false
+SECRET_KEY=your-super-secret-production-key-here
+HOST=0.0.0.0
 
-#### Auto-Generated Variables (let Render generate these):
-```bash
-SECRET_KEY=auto-generated-by-render
-JWT_SECRET_KEY=auto-generated-by-render
-```
+# Database
+MONGO_URI=your-mongodb-atlas-connection-string
+DATABASE_NAME=workforce_monitoring
 
-#### Optional Variables:
-```bash
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_PASSWORD=your-secure-password
-DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
-CORS_ORIGINS=*
+# JWT
+JWT_SECRET_KEY=your-jwt-secret-production-key-here
+
+# CORS (update with your frontend domain)
+CORS_ORIGINS=https://your-frontend-domain.com,https://www.your-frontend-domain.com
+
+# API Configuration
+API_TITLE=Workforce Monitoring API
+API_VERSION=v1
+API_PREFIX=/api
+
+# Face Recognition
+FACE_RECOGNITION_MODEL=hog
 FACE_RECOGNITION_TOLERANCE=0.6
+
+# Safety Monitoring
 SAFETY_CONFIDENCE_THRESHOLD=0.7
+
+# Camera Configuration
+CAMERA_INDEX=0
+CAMERA_WIDTH=640
+CAMERA_HEIGHT=480
+CAMERA_FPS=30
+
+# File Upload
+MAX_CONTENT_LENGTH=16777216
+
+# WebSocket
+WEBSOCKET_ASYNC_MODE=threading
+
+# Admin User
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=change-this-in-production
+DEFAULT_ADMIN_EMAIL=admin@yourcompany.com
 ```
 
-### 2.4 Deploy
+#### Auto-provided by Render
+- `PORT` - Render automatically sets this
 
-1. Click "Create Web Service"
-2. Render will automatically start building and deploying
-3. Monitor the build logs for any errors
-4. Once deployed, you'll get a URL like: `https://workforce-monitoring-system-abcd.onrender.com`
+### 4. Advanced Settings
 
-## 🔍 Step 3: Post-Deployment Verification
+#### Build & Deploy
+- **Build Command**: *(Leave empty - uses Dockerfile)*
+- **Start Command**: *(Leave empty - uses Dockerfile CMD)*
 
-### 3.1 Check Health Status
+#### Resources
+- **Plan**: Start with "Starter" plan ($7/month)
+- **Auto-Deploy**: Enable for automatic deployments
 
-Visit: `https://your-app-url.onrender.com/api/health`
+#### Health Check
+- **Health Check Path**: `/api/health`
 
-Should return:
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-01-01T00:00:00",
-  "services": {
-    "mongodb": true,
-    "face_recognition": true,
-    "safety_monitoring": true,
-    "camera": false
-  }
-}
-```
+### 5. Database Setup (MongoDB Atlas)
 
-### 3.2 Test Frontend Access
+1. **Create MongoDB Atlas cluster** (if not already done)
+2. **Get connection string** and add to `MONGO_URI`
+3. **Whitelist Render IPs** (or use 0.0.0.0/0 for simplicity)
 
-1. Visit: `https://your-app-url.onrender.com`
-2. Should show the React frontend
-3. Try logging in with default admin credentials
+## 📱 Frontend Configuration
 
-### 3.3 Test API Endpoints
+Update your frontend environment variables to use the Render URL:
 
-Test key endpoints:
-- `GET /api/employees` - Should return empty array initially
-- `POST /api/auth/login` - Should accept admin credentials
-- `GET /api/dashboard/stats` - Should return system stats
-
-## 🛠️ Troubleshooting
-
-### Common Issues:
-
-#### 1. Build Failures
 ```bash
-# If build fails, check:
-- Node.js version compatibility
-- Python dependencies
-- File permissions
+# frontend/.env.production
+VITE_API_URL=https://your-service-name.onrender.com/api
+VITE_WEBSOCKET_URL=https://your-service-name.onrender.com
 ```
 
-#### 2. MongoDB Connection Issues
+## 🔧 Local Testing with Docker
+
+### Build and run locally:
+
 ```bash
-# Check:
-- Connection string format
-- Username/password correctness
-- Network access configuration
-- Database name in connection string
+# Build the Docker image
+cd backend
+docker build -f Dockerfile.render -t workforce-backend .
+
+# Run the container
+docker run -p 5001:5001 \
+  -e MONGO_URI="your-mongo-uri" \
+  -e SECRET_KEY="test-key" \
+  -e JWT_SECRET_KEY="test-jwt-key" \
+  workforce-backend
 ```
 
-#### 3. Frontend Not Loading
+### Using Docker Compose:
+
 ```bash
-# Check:
-- Build script completed successfully
-- Static files copied to backend/static/
-- Frontend routes configured correctly
+# Create .env file with your variables
+cp backend/.env .env
+
+# Run with docker-compose
+docker-compose up --build
 ```
 
-#### 4. API Errors
+## 🚨 Troubleshooting
+
+### Common Issues
+
+#### 1. Memory Errors
+- **Solution**: Use `requirements.docker.txt` instead of full requirements
+- **Alternative**: Remove heavy packages like `torch`, `torchvision`, `ultralytics`
+
+#### 2. Build Timeout
+- **Solution**: Use multi-stage Dockerfile (`Dockerfile.render`)
+- **Alternative**: Pre-build image and push to Docker Hub
+
+#### 3. Database Connection
+- **Check**: MongoDB Atlas connection string
+- **Check**: IP whitelist includes Render IPs
+- **Check**: Database name matches `DATABASE_NAME`
+
+#### 4. CORS Issues
+- **Update**: `CORS_ORIGINS` with your frontend domain
+- **Format**: `https://yourapp.com,https://www.yourapp.com`
+
+#### 5. WebSocket Connection
+- **Use**: `wss://` instead of `ws://` for HTTPS
+- **Check**: CORS origins include WebSocket domains
+
+### Memory Optimization Tips
+
+1. **Remove unused packages** from requirements
+2. **Use lighter alternatives**:
+   - `opencv-python-headless` instead of `opencv-python`
+   - Skip `torch`/`torchvision` if not essential
+3. **Reduce worker processes** (set to 1 in gunicorn config)
+4. **Enable memory limits** in Docker
+
+### Logs and Debugging
+
 ```bash
-# Check:
-- Environment variables set correctly
-- MongoDB connection working
-- Import errors in Python code
+# View Render logs
+# Go to Render Dashboard → Your Service → Logs
+
+# Local debugging
+docker logs <container-id>
+
+# Health check
+curl https://your-service.onrender.com/api/health
 ```
 
-### Debug Steps:
+## 🔒 Security Checklist
 
-1. **Check Build Logs**: Look for errors in Render build logs
-2. **Check Runtime Logs**: Monitor application logs in Render dashboard
-3. **Test Health Endpoint**: Use `/api/health` to verify service status
-4. **Test Database**: Check if MongoDB connection is working
+- [ ] Strong `SECRET_KEY` and `JWT_SECRET_KEY`
+- [ ] Specific CORS origins (not `*`)
+- [ ] MongoDB Atlas with IP restrictions
+- [ ] Change default admin password
+- [ ] Enable HTTPS on frontend
+- [ ] Use environment variables for secrets
 
-## 📱 Step 4: Domain Configuration (Optional)
+## 💰 Cost Optimization
 
-### 4.1 Custom Domain
+### Render Pricing (as of 2024)
+- **Starter**: $7/month, 512MB RAM, 0.1 CPU
+- **Standard**: $25/month, 2GB RAM, 1 CPU
+- **Pro**: $85/month, 4GB RAM, 2 CPU
 
-1. Go to Render service settings
-2. Add your custom domain
-3. Configure DNS records as instructed
-4. Enable SSL (automatic with Render)
+### Tips
+1. **Start with Starter plan** - should be sufficient for development
+2. **Monitor memory usage** in Render dashboard
+3. **Scale up only if needed**
+4. **Use sleep prevention** to avoid cold starts
 
-### 4.2 Environment-Specific URLs
+## 🚀 Production Checklist
 
-Update environment variables if using custom domain:
-```bash
-CORS_ORIGINS=https://yourdomain.com
-```
+- [ ] Environment variables set correctly
+- [ ] Database properly configured
+- [ ] CORS origins updated
+- [ ] Health check working
+- [ ] Frontend pointing to Render URL
+- [ ] SSL/HTTPS enabled
+- [ ] Monitoring set up
+- [ ] Backup strategy in place
 
-## 🔐 Security Considerations
+## 📊 Monitoring
 
-### 4.1 Environment Variables
+1. **Render Dashboard**: Monitor CPU, memory, and response times
+2. **Application Logs**: Check for errors and performance issues
+3. **Health Checks**: Ensure `/api/health` returns 200
+4. **Database Monitoring**: MongoDB Atlas metrics
 
-- Never commit secrets to git
-- Use Render's environment variable encryption
-- Generate strong SECRET_KEY and JWT_SECRET_KEY
-- Change default admin password
+## 🔄 Updates and Deployments
 
-### 4.2 MongoDB Security
+### Automatic Deployment
+- Push to main branch → Render auto-deploys
 
-- Use strong database passwords
-- Enable IP whitelisting if possible
-- Regular security updates
+### Manual Deployment
+- Go to Render Dashboard → Deploy latest commit
 
-### 4.3 Application Security
-
-- HTTPS enabled by default on Render
-- CORS properly configured
-- Input validation on all API endpoints
-
-## 🎯 Performance Optimization
-
-### 4.1 Render Settings
-
-- Choose appropriate instance size
-- Enable auto-scaling if needed
-- Monitor resource usage
-
-### 4.2 Database Optimization
-
-- Use MongoDB Atlas performance advisor
-- Add indexes for frequently queried fields
-- Monitor query performance
-
-### 4.3 Frontend Optimization
-
-- Static assets cached by Render CDN
-- Code splitting configured in Vite
-- Compressed assets
-
-## 🔄 Continuous Deployment
-
-### 4.1 Auto-Deploy
-
-- Enabled by default on main branch
-- Pushes to main trigger automatic builds
-- Failed builds don't affect live service
-
-### 4.2 Environment Branches
-
-Create separate services for:
-- Development: `dev` branch
-- Staging: `staging` branch  
-- Production: `main` branch
-
-## 📊 Monitoring and Logs
-
-### 4.1 Render Monitoring
-
-- Built-in metrics dashboard
-- Real-time logs
-- Performance monitoring
-
-### 4.2 Application Monitoring
-
-- Health check endpoint
-- Database connection monitoring
-- Error tracking via logs
-
-## 🆘 Support and Maintenance
-
-### 4.1 Regular Updates
-
-- Keep dependencies updated
-- Monitor security advisories
-- Update MongoDB connection strings if needed
-
-### 4.2 Backup Strategy
-
-- MongoDB Atlas automatic backups
-- Export configuration settings
-- Keep deployment documentation updated
-
-## 📞 Getting Help
-
-If you encounter issues:
-
-1. Check Render documentation
-2. Review build and runtime logs
-3. Test individual components
-4. Contact support if needed
+### Rollback
+- Go to Render Dashboard → Deploys → Rollback
 
 ---
 
-## 🎉 Congratulations!
+## 🆘 Support
 
-Your Workforce Monitoring System is now deployed on Render! 
+If you encounter issues:
 
-- **Frontend**: Available at your Render URL
-- **API**: Available at `your-url/api/*`
-- **WebSocket**: Real-time updates enabled
-- **Database**: MongoDB Atlas connected
-- **SSL**: Automatic HTTPS
-- **Scaling**: Auto-scaling enabled
+1. **Check Render logs** first
+2. **Verify environment variables**
+3. **Test locally with Docker**
+4. **Check database connectivity**
+5. **Review CORS configuration**
 
-The system is production-ready and will automatically deploy updates when you push to your main branch. 
+Your Flask backend should now be running efficiently on Render! 🎉 
