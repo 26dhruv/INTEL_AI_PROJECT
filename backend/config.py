@@ -2,10 +2,18 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed, will use system environment variables
+    pass
+
 class Config:
     # MongoDB Configuration
     MONGO_URI = os.getenv('MONGO_URI', 'mongodb+srv://dhruv:O87jTJsEnJhDwMWP@patrolmonitoring.drkoji9.mongodb.net/?retryWrites=true&w=majority&appName=PatrolMonitoring')
-    DATABASE_NAME = 'workforce_monitoring'
+    DATABASE_NAME = os.getenv('DATABASE_NAME', 'workforce_monitoring')
     
     # Collections
     EMPLOYEES_COLLECTION = 'employees'
@@ -17,52 +25,49 @@ class Config:
     # Flask Configuration
     SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+    HOST = os.getenv('HOST', '0.0.0.0')
+    PORT = int(os.getenv('PORT', '5001'))
     
     # JWT Configuration
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_HOURS', '1')))
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES_DAYS', '30')))
     
     # File Storage
     UPLOAD_FOLDER = Path('data/uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '16777216'))  # 16MB max file size
     
     # Face Recognition
     FACE_ENCODINGS_PATH = Path("data/face_encodings.pkl")
     EMPLOYEE_IMAGES_DIR = Path("data/employee_images")
-    FACE_RECOGNITION_MODEL = "hog"
-    FACE_RECOGNITION_TOLERANCE = 0.6
+    FACE_RECOGNITION_MODEL = os.getenv('FACE_RECOGNITION_MODEL', 'hog')
+    FACE_RECOGNITION_TOLERANCE = float(os.getenv('FACE_RECOGNITION_TOLERANCE', '0.6'))
     
     # Safety Monitoring
     PPE_MODEL_PATH = Path("data/ppe_model.pt")
-    SAFETY_CONFIDENCE_THRESHOLD = 0.7
+    SAFETY_CONFIDENCE_THRESHOLD = float(os.getenv('SAFETY_CONFIDENCE_THRESHOLD', '0.7'))
     
     # Camera Configuration
-    CAMERA_INDEX = 0
-    CAMERA_WIDTH = 640
-    CAMERA_HEIGHT = 480
-    CAMERA_FPS = 30
+    CAMERA_INDEX = int(os.getenv('CAMERA_INDEX', '0'))
+    CAMERA_WIDTH = int(os.getenv('CAMERA_WIDTH', '640'))
+    CAMERA_HEIGHT = int(os.getenv('CAMERA_HEIGHT', '480'))
+    CAMERA_FPS = int(os.getenv('CAMERA_FPS', '30'))
     
     # API Configuration
-    API_TITLE = "Workforce Monitoring API"
-    API_VERSION = "v1"
-    API_PREFIX = "/api"
+    API_TITLE = os.getenv('API_TITLE', 'Workforce Monitoring API')
+    API_VERSION = os.getenv('API_VERSION', 'v1')
+    API_PREFIX = os.getenv('API_PREFIX', '/api')
     
-    # CORS Configuration
-    CORS_ORIGINS = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
-    ]
+    # CORS Configuration - Backend should not know about frontend URLs
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173').split(',')
     
     # WebSocket Configuration
-    WEBSOCKET_ASYNC_MODE = 'threading'
+    WEBSOCKET_ASYNC_MODE = os.getenv('WEBSOCKET_ASYNC_MODE', 'threading')
     
     # Default Admin User
-    DEFAULT_ADMIN_USERNAME = 'admin'
-    DEFAULT_ADMIN_PASSWORD = 'admin123'
-    DEFAULT_ADMIN_EMAIL = 'admin@workforce.com'
+    DEFAULT_ADMIN_USERNAME = os.getenv('DEFAULT_ADMIN_USERNAME', 'admin')
+    DEFAULT_ADMIN_PASSWORD = os.getenv('DEFAULT_ADMIN_PASSWORD', 'admin123')
+    DEFAULT_ADMIN_EMAIL = os.getenv('DEFAULT_ADMIN_EMAIL', 'admin@workforce.com')
     
     def __init__(self):
         """Initialize configuration and create necessary directories"""

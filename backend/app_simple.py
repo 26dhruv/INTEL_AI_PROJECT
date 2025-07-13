@@ -25,7 +25,7 @@ from flask_socketio import SocketIO, emit
 # Add parent directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.mongodb_manager import MongoDBManager
+from backend.mongodb_manager import MongoDBManager
 from backend.config import Config, get_config
 
 # =============================================================================
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # FLASK APP SETUP
 # =============================================================================
 
-app = Flask(__name__, static_folder='../frontend/dist')
+app = Flask(__name__, static_folder='static', static_url_path='')
 app.config.update({
     'SECRET_KEY': config.SECRET_KEY,
     'MAX_CONTENT_LENGTH': config.MAX_CONTENT_LENGTH
@@ -560,7 +560,16 @@ def serve_react_app():
 
 @app.route('/<path:path>')
 def serve_react_assets(path):
-    return send_from_directory(app.static_folder, path)
+    try:
+        # If it's an API route, let it be handled by the API
+        if path.startswith('api/'):
+            return "Not found", 404
+        
+        # Try to serve the static file
+        return send_from_directory(app.static_folder, path)
+    except:
+        # If file not found, serve index.html (for React Router)
+        return send_from_directory(app.static_folder, 'index.html')
 
 # =============================================================================
 # HEALTH CHECK
@@ -711,7 +720,10 @@ def logout():
 @require_db
 @handle_exceptions
 def get_employees():
-    employees = db_manager.get_all_employees()
+    # Check for include_inactive parameter
+    include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+    
+    employees = db_manager.get_all_employees(include_inactive=include_inactive)
     return create_response(employees)
 
 @app.route('/api/employees/<employee_id>', methods=['GET'])
@@ -840,11 +852,28 @@ def update_employee(employee_id):
 @require_db
 @handle_exceptions
 def delete_employee(employee_id):
-    success = db_manager.delete_employee(employee_id)
+    # Check for hard_delete parameter
+    hard_delete = request.args.get('hard_delete', 'false').lower() == 'true'
+    
+    success = db_manager.delete_employee(employee_id, hard_delete=hard_delete)
     
     if not success:
         return create_response(error='Employee not found', status=404)
-    return create_response({'message': 'Employee deleted successfully'})
+    
+    action = "permanently deleted" if hard_delete else "deactivated"
+    return create_response({'message': f'Employee {action} successfully', 'hard_delete': hard_delete})
+
+@app.route('/api/employees/<employee_id>/reactivate', methods=['PUT'])
+@require_db
+@handle_exceptions
+def reactivate_employee(employee_id):
+    """Reactivate a deactivated employee"""
+    success = db_manager.reactivate_employee(employee_id)
+    
+    if not success:
+        return create_response(error='Employee not found or already active', status=404)
+    
+    return create_response({'message': 'Employee reactivated successfully'})
 
 @app.route('/api/employees/face-encodings', methods=['GET'])
 @require_db
@@ -1015,18 +1044,24 @@ def mark_attendance():
         timestamp = datetime.now()
     
     # Save attendance record
-    success = db_manager.save_attendance(employee_id, confidence, True)
-    
-    if success:
-        logger.info(f"Attendance marked for employee {employee_id} with {confidence:.2f} confidence")
-        return create_response({
-            'message': 'Attendance marked successfully',
-            'employee_id': employee_id,
-            'timestamp': timestamp.isoformat(),
-            'confidence': confidence
-        })
-    else:
-        return create_response(error='Failed to mark attendance', status=500)
+    try:
+        logger.info(f"Attempting to save attendance for employee {employee_id} with confidence {confidence:.2f}")
+        success = db_manager.save_attendance(employee_id, confidence, True)
+        
+        if success:
+            logger.info(f"✅ Attendance marked successfully for employee {employee_id} with {confidence:.2f} confidence")
+            return create_response({
+                'message': 'Attendance marked successfully',
+                'employee_id': employee_id,
+                'timestamp': timestamp.isoformat(),
+                'confidence': confidence
+            })
+        else:
+            logger.error(f"❌ Failed to mark attendance for employee {employee_id} - save_attendance returned False")
+            return create_response(error='Failed to mark attendance', status=500)
+    except Exception as e:
+        logger.error(f"❌ Exception in mark_attendance endpoint: {e}")
+        return create_response(error=f'Error marking attendance: {str(e)}', status=500)
 
 @app.route('/api/attendance/check-today', methods=['GET'])
 @require_db
@@ -1055,7 +1090,24 @@ def check_today_attendance():
 @require_db
 @handle_exceptions
 def get_safety_events():
-    params = {k: request.args.get(k) for k in ['start_date', 'end_date', 'event_type']}
+    params = {k: request.args.get(k) for k in ['start_date', 'end_date', 'employee_id', 'event_type']}
+    
+    # Parse date parameters if provided
+    if params.get('start_date'):
+        try:
+            params['start_date'] = datetime.fromisoformat(params['start_date'].replace('Z', '+00:00'))
+        except ValueError:
+            pass
+    
+    if params.get('end_date'):
+        try:
+            params['end_date'] = datetime.fromisoformat(params['end_date'].replace('Z', '+00:00'))
+        except ValueError:
+            pass
+    
+    # Remove None values
+    params = {k: v for k, v in params.items() if v is not None}
+    
     events = db_manager.get_safety_events(**params)
     return create_response(events)
 
@@ -1409,8 +1461,8 @@ if __name__ == '__main__':
     logger.info("🔐 Default admin credentials: admin/admin123")
     
     try:
-        # Use port 5001 to avoid conflicts with AirPlay on macOS
-        socketio.run(app, host='0.0.0.0', port=5001, debug=config.DEBUG)
+        # Use configured host and port from environment variables
+        socketio.run(app, host=config.HOST, port=config.PORT, debug=config.DEBUG)
     except KeyboardInterrupt:
         logger.info("\n👋 Shutting down gracefully...")
         cleanup_camera()

@@ -9,18 +9,26 @@ function AnimatedStars() {
   const [sphere] = useMemo(() => {
     const sphere = new Float32Array(5000);
     for (let i = 0; i < 5000; i++) {
-      const radius = 4 + Math.random() * 20;
+      // Use more conservative random values to avoid edge cases
+      const radius = 4 + Math.random() * 16; // Reduced from 20 to 16
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
       
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.sin(phi) * Math.sin(theta);
-      const z = radius * Math.cos(phi);
+      // Ensure phi is in valid range for acos
+      const randomValue = Math.max(-1, Math.min(1, Math.random() * 2 - 1));
+      const phi = Math.acos(randomValue);
       
-      // Check for NaN values and provide fallbacks
-      sphere[i * 3] = isNaN(x) ? 0 : x;
-      sphere[i * 3 + 1] = isNaN(y) ? 0 : y;
-      sphere[i * 3 + 2] = isNaN(z) ? 0 : z;
+      let x = radius * Math.sin(phi) * Math.cos(theta);
+      let y = radius * Math.sin(phi) * Math.sin(theta);
+      let z = radius * Math.cos(phi);
+      
+      // Additional validation and fallbacks
+      if (!isFinite(x) || isNaN(x)) x = (Math.random() - 0.5) * 10;
+      if (!isFinite(y) || isNaN(y)) y = (Math.random() - 0.5) * 10;
+      if (!isFinite(z) || isNaN(z)) z = (Math.random() - 0.5) * 10;
+      
+      sphere[i * 3] = x;
+      sphere[i * 3 + 1] = y;
+      sphere[i * 3 + 2] = z;
     }
     return [sphere];
   }, []);
@@ -60,13 +68,23 @@ function FloatingOrbs() {
 
   return (
     <group ref={ref}>
-      {Array.from({ length: 8 }, (_, i) => (
-        <FloatingOrb key={i} position={[
-          Math.sin((i / 8) * Math.PI * 2) * 5,
-          Math.cos((i / 8) * Math.PI * 2) * 2,
-          Math.sin((i / 8) * Math.PI * 4) * 3
-        ]} />
-      ))}
+      {Array.from({ length: 8 }, (_, i) => {
+        const angle1 = (i / 8) * Math.PI * 2;
+        const angle2 = (i / 8) * Math.PI * 4;
+        
+        let x = Math.sin(angle1) * 5;
+        let y = Math.cos(angle1) * 2;
+        let z = Math.sin(angle2) * 3;
+        
+        // Ensure all position values are finite
+        if (!isFinite(x)) x = 0;
+        if (!isFinite(y)) y = 0;
+        if (!isFinite(z)) z = 0;
+        
+        return (
+          <FloatingOrb key={i} position={[x, y, z]} />
+        );
+      })}
     </group>
   );
 }
@@ -76,11 +94,21 @@ function FloatingOrb({ position }: { position: [number, number, number] }) {
   const [hovered, setHovered] = React.useState(false);
   
   useFrame((state) => {
-    if (ref.current) {
-      ref.current.position.y += Math.sin(state.clock.elapsedTime + position[0]) * 0.01;
+    if (ref.current && state.clock && isFinite(state.clock.elapsedTime)) {
+      const timeOffset = isFinite(position[0]) ? position[0] : 0;
+      const yOffset = Math.sin(state.clock.elapsedTime + timeOffset) * 0.01;
+      
+      if (isFinite(yOffset)) {
+        ref.current.position.y += yOffset;
+      }
+      
       ref.current.rotation.x += 0.01;
       ref.current.rotation.y += 0.01;
-      ref.current.scale.setScalar(hovered ? 1.2 : 1);
+      
+      const scaleValue = hovered ? 1.2 : 1;
+      if (isFinite(scaleValue)) {
+        ref.current.scale.setScalar(scaleValue);
+      }
     }
   });
 
@@ -139,10 +167,17 @@ function PulsatingRings() {
   const ref = useRef<THREE.Group>(null);
   
   useFrame((state) => {
-    if (ref.current) {
+    if (ref.current && state.clock && isFinite(state.clock.elapsedTime)) {
       const scale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
-      ref.current.scale.setScalar(scale);
-      ref.current.rotation.z = state.clock.elapsedTime * 0.5;
+      const rotation = state.clock.elapsedTime * 0.5;
+      
+      if (isFinite(scale)) {
+        ref.current.scale.setScalar(scale);
+      }
+      
+      if (isFinite(rotation)) {
+        ref.current.rotation.z = rotation;
+      }
     }
   });
 

@@ -23,21 +23,19 @@ def main():
     """Main entry point for the application"""
     try:
         # Import after setting up the path
-        from backend.app import app, socketio
-        from backend.config import config
+        from backend.app_simple import app, socketio
+        from backend.config import get_config
         
         # Get configuration based on environment
-        env = os.getenv('FLASK_ENV', 'development')
-        app_config = config.get(env, config['default'])()
-        
-        # Configure the app
-        app.config.from_object(app_config)
+        config = get_config()
         
         print("🚀 Starting Workforce Monitoring System Backend")
-        print(f"📊 Environment: {env}")
-        print(f"🔧 Debug Mode: {app_config.DEBUG}")
-        print(f"🗄️  MongoDB URI: {app_config.MONGODB_URI}")
-        print(f"📁 Data Directory: {app_config.DATA_DIR}")
+        print(f"📊 Environment: {os.getenv('FLASK_ENV', 'development')}")
+        print(f"🔧 Debug Mode: {config.DEBUG}")
+        print(f"🌐 Host: {config.HOST}")
+        print(f"🚪 Port: {config.PORT}")
+        print(f"🗄️  MongoDB URI: {config.MONGO_URI}")
+        print(f"📁 Data Directory: data/")
         print("="*60)
         print("🌐 API Endpoints Available:")
         print("   • Health Check: GET /api/health")
@@ -57,16 +55,16 @@ def main():
         print("="*60)
         print("📱 Frontend Integration:")
         print(f"   • React App: Served from /")
-        print(f"   • CORS Origins: {app_config.CORS_ORIGINS}")
+        print(f"   • CORS Origins: {config.CORS_ORIGINS}")
         print("="*60)
         
         # Start the application
         socketio.run(
             app,
-            host='0.0.0.0',
-            port=5000,
-            debug=app_config.DEBUG,
-            use_reloader=app_config.DEBUG
+            host=config.HOST,
+            port=config.PORT,
+            debug=config.DEBUG,
+            use_reloader=config.DEBUG
         )
         
     except KeyboardInterrupt:
