@@ -18,14 +18,14 @@ services:
       # Pre-compile Python files to reduce startup memory
       python -m py_compile app_simple.py config.py mongodb_manager.py utils.py start_optimized.py
     startCommand: |
-      # Simple startup for Render
+      # Render startup for Workforce Monitoring System
       echo "🚀 Starting Workforce Monitoring System"
       echo "📁 Current directory: $(pwd)"
       echo "🔧 PORT: $PORT"
       echo "📄 Files: $(ls -la *.py)"
       
-      # Start with simple script
-      python start_simple.py
+      # Start with Render-specific script
+      python start_render.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -51,8 +51,7 @@ services:
         value: false
       - key: HOST
         value: 0.0.0.0
-      - key: PORT
-        value: 10000
+
       - key: CORS_ORIGINS
         value: "*"
       - key: DATABASE_NAME
