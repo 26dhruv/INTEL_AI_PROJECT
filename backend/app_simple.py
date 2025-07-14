@@ -48,8 +48,8 @@ from flask_socketio import SocketIO, emit
 # Add parent directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.mongodb_manager import MongoDBManager
-from backend.config import Config, get_config
+from mongodb_manager import MongoDBManager
+from config import Config, get_config
 
 # =============================================================================
 # CONFIGURATION & LOGGING

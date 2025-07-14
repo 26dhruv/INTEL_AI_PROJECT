@@ -39,6 +39,9 @@ def main():
     
     # Import and run the main application
     try:
+        # Add current directory to path for imports
+        sys.path.insert(0, os.path.dirname(__file__))
+        
         # Import directly since we're running from the backend directory
         from app_simple import app, socketio, config
         
