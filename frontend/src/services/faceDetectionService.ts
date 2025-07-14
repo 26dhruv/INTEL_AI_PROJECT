@@ -2,6 +2,15 @@ import * as faceapi from 'face-api.js';
 import { employeeService, type Employee } from './employeeService';
 import { attendanceService } from './attendanceService';
 
+// Get the correct API base URL using the same logic as api.ts
+const getApiBaseUrl = (): string => {
+  return import.meta.env.VITE_API_URL || (
+    import.meta.env.MODE === 'production' 
+      ? '/api'  // Production: Use relative path
+      : 'http://localhost:5001/api'  // Development: Use localhost
+  );
+};
+
 interface DetectedFace {
   id: string;
   employee_id: string;
@@ -103,7 +112,7 @@ class FaceDetectionService {
       
       // Load real face encodings from backend
       try {
-        const response = await fetch('http://localhost:5001/api/employees/face-encodings');
+        const response = await fetch(`${getApiBaseUrl()}/employees/face-encodings`);
         if (response.ok) {
           const faceData = await response.json();
           
@@ -393,7 +402,7 @@ class FaceDetectionService {
       const imageData = this.canvas.toDataURL('image/jpeg', 0.8);
       
       // Send frame to backend for safety analysis
-      const response = await fetch('http://localhost:5001/api/safety/analyze-frame', {
+      const response = await fetch(`${getApiBaseUrl()}/safety/analyze-frame`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
