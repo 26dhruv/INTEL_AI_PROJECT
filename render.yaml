@@ -23,8 +23,8 @@ services:
       export PYTHONMALLOC=malloc
       export PYTHONHASHSEED=random
       
-      # Start with memory-optimized script
-      python -O start_optimized.py
+      # Start with Gunicorn for production
+      gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class eventlet wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

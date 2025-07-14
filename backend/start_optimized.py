@@ -49,13 +49,27 @@ def main():
         
         # Run the application
         logger.info(f"Starting server on {config.HOST}:{config.PORT}")
-        socketio.run(
-            app,
-            host=config.HOST,
-            port=config.PORT,
-            debug=config.DEBUG,
-            use_reloader=False  # Disable reloader to save memory
-        )
+        
+        # Use Gunicorn for production deployment
+        if os.getenv('FLASK_ENV') == 'production':
+            logger.info("🚀 Starting with Gunicorn for production")
+            # For production, we'll use the Flask app directly with Gunicorn
+            # The socketio.run() is only for development
+            app.run(
+                host=config.HOST,
+                port=config.PORT,
+                debug=False
+            )
+        else:
+            # Development mode
+            socketio.run(
+                app,
+                host=config.HOST,
+                port=config.PORT,
+                debug=config.DEBUG,
+                use_reloader=False,  # Disable reloader to save memory
+                allow_unsafe_werkzeug=True  # Allow Werkzeug in production for Render
+            )
         
     except Exception as e:
         logger.error(f"Failed to start application: {e}")

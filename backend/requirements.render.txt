@@ -20,6 +20,10 @@ opencv-python-headless==4.8.1.78
 bcrypt==4.0.1
 PyJWT==2.8.0
 
+# Production WSGI Server
+gunicorn==21.2.0
+eventlet==0.33.3
+
 # Note: Heavy ML packages (face_recognition, dlib, torch, ultralytics) 
 # are excluded for Render deployment to reduce memory usage
 # These can be added later if needed for specific features 
