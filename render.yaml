@@ -18,18 +18,14 @@ services:
       # Pre-compile Python files to reduce startup memory
       python -m py_compile app_simple.py config.py mongodb_manager.py utils.py start_optimized.py
     startCommand: |
-      # Memory optimization for runtime
-      export PYTHONOPTIMIZE=1
-      export PYTHONMALLOC=malloc
-      export PYTHONHASHSEED=random
-      
-      # Debug: Show what we're running
-      echo "🚀 Starting Workforce Monitoring System on port $PORT"
+      # Simple startup for Render
+      echo "🚀 Starting Workforce Monitoring System"
       echo "📁 Current directory: $(pwd)"
-      echo "📄 Files in directory: $(ls -la)"
+      echo "🔧 PORT: $PORT"
+      echo "📄 Files: $(ls -la *.py)"
       
-      # Start with simple Python script for Render
-      python start_render.py
+      # Start with simple script
+      python start_simple.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
