@@ -30,8 +30,7 @@ def main():
             host=config.HOST,
             port=config.PORT,
             debug=config.DEBUG,
-            use_reloader=True,  # Enable reloader for development
-            threaded=True
+            use_reloader=True  # Enable reloader for development
         )
         
     except Exception as e:

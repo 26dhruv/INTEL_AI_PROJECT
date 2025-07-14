@@ -51,8 +51,7 @@ def main():
             host=config.HOST,
             port=config.PORT,
             debug=config.DEBUG,
-            use_reloader=False,  # Disable reloader to save memory
-            threaded=True
+            use_reloader=False  # Disable reloader to save memory
         )
         
     except Exception as e:
