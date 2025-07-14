@@ -183,6 +183,7 @@ class RealFaceRecognitionSystem:
         try:
             face_recognition = import_face_recognition()
             cv2 = import_cv2()
+            np = import_numpy()
             
             if face_recognition is None:
                 logger.error("face_recognition library not available, falling back to OpenCV detection")
@@ -832,6 +833,8 @@ def register_employee():
                     image_data_str = image_data_str.split(',')[1]  # Remove data URL prefix
                 
                 image_bytes = base64.b64decode(image_data_str)
+                np = import_numpy()
+                cv2 = import_cv2()
                 image_array = np.frombuffer(image_bytes, dtype=np.uint8)
                 face_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
                 
@@ -993,6 +996,8 @@ def update_employee_face_photo(employee_id):
                 image_data_str = image_data_str.split(',')[1]  # Remove data URL prefix
             
             image_bytes = base64.b64decode(image_data_str)
+            np = import_numpy()
+            cv2 = import_cv2()
             image_array = np.frombuffer(image_bytes, dtype=np.uint8)
             face_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
             
@@ -1190,6 +1195,8 @@ def analyze_safety_frame():
         
         # Decode image
         image_bytes = base64.b64decode(frame_data_str)
+        np = import_numpy()
+        cv2 = import_cv2()
         image_array = np.frombuffer(image_bytes, dtype=np.uint8)
         frame = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         
@@ -1297,6 +1304,7 @@ def process_frame_with_overlays(frame):
     """Process frame and add real face detection overlays"""
     try:
         # Make a copy of the frame
+        cv2 = import_cv2()
         display_frame = frame.copy()
         height, width = frame.shape[:2]
         
