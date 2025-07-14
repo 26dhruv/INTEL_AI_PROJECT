@@ -378,12 +378,12 @@ export function Settings() {
                         
                         {setting.type === 'select' && (
                           <select
-                            value={setting.value}
+                            value={String(setting.value)}
                             onChange={(e) => updateSetting(group.id, setting.id, e.target.value)}
                             className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
                             {setting.options?.map((option) => (
-                              <option key={option.value} value={option.value} className="bg-gray-800">
+                              <option key={String(option.value)} value={String(option.value)} className="bg-gray-800">
                                 {option.label}
                               </option>
                             ))}
@@ -393,7 +393,7 @@ export function Settings() {
                         {setting.type === 'number' && (
                           <input
                             type="number"
-                            value={setting.value}
+                            value={String(setting.value)}
                             min={setting.min}
                             max={setting.max}
                             onChange={(e) => updateSetting(group.id, setting.id, parseInt(e.target.value))}
@@ -404,7 +404,7 @@ export function Settings() {
                         {setting.type === 'text' && (
                           <input
                             type="text"
-                            value={setting.value}
+                            value={String(setting.value)}
                             onChange={(e) => updateSetting(group.id, setting.id, e.target.value)}
                             className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                           />
