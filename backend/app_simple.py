@@ -113,11 +113,15 @@ class RealFaceRecognitionSystem:
         self.known_face_names = []
         self.known_employee_ids = []
         
-        # Lazy load OpenCV
-        cv2 = import_cv2()
-        
-        # Initialize OpenCV face detector
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # Check if OpenCV is available
+        try:
+            cv2 = import_cv2()
+            # Initialize OpenCV face detector
+            self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            logger.info("✅ OpenCV face detection initialized")
+        except Exception as e:
+            logger.warning(f"⚠️ OpenCV not available: {e}")
+            self.face_cascade = None
         
         # Load any existing employee data from database
         self.load_employees_from_db()
@@ -139,8 +143,12 @@ class RealFaceRecognitionSystem:
                         self.known_employee_ids.append(emp['employee_id'])
                         self.known_face_names.append(emp['name'])
                         # Convert list back to numpy array
-                        np = import_numpy()
-                        self.known_face_encodings.append(np.array(emp['face_encoding']))
+                        try:
+                            np = import_numpy()
+                            self.known_face_encodings.append(np.array(emp['face_encoding']))
+                        except Exception as e:
+                            logger.warning(f"⚠️ NumPy not available for face encodings: {e}")
+                            break
                 
                 logger.info(f"Loaded {len(self.known_face_names)} employees with face encodings for recognition")
         except Exception as e:
@@ -154,8 +162,13 @@ class RealFaceRecognitionSystem:
                 self.known_face_names.append(name)
                 # In a real system, you'd extract face encodings from the image
                 # For now, create a dummy encoding
-                np = import_numpy()
-                self.known_face_encodings.append(np.random.random(128))
+                try:
+                    np = import_numpy()
+                    self.known_face_encodings.append(np.random.random(128))
+                except Exception as e:
+                    logger.warning(f"⚠️ NumPy not available for face encoding: {e}")
+                    # Create a simple list instead
+                    self.known_face_encodings.append([0.5] * 128)
                 logger.info(f"Registered employee {name} ({employee_id}) for face recognition")
                 return True
             else:
@@ -168,6 +181,10 @@ class RealFaceRecognitionSystem:
     def detect_faces(self, frame):
         """Detect faces in frame using OpenCV"""
         try:
+            if self.face_cascade is None:
+                logger.warning("⚠️ OpenCV face detection not available")
+                return []
+            
             cv2 = import_cv2()
             # Convert to grayscale for face detection
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -193,7 +210,7 @@ class RealFaceRecognitionSystem:
             cv2 = import_cv2()
             
             if face_recognition is None:
-                logger.error("face_recognition library not available, falling back to OpenCV detection")
+                logger.warning("⚠️ face_recognition library not available, falling back to OpenCV detection")
                 # Fallback to OpenCV detection without recognition
                 faces = self.detect_faces(frame)
                 results = []
@@ -273,7 +290,8 @@ class RealSafetyMonitor:
             # For helmet detection, we'll use color-based detection since OpenCV doesn't have a pre-trained helmet cascade
             logger.info("Safety detection classifiers loaded successfully")
         except Exception as e:
-            logger.error(f"Error loading safety classifiers: {e}")
+            logger.warning(f"⚠️ OpenCV not available for safety detection: {e}")
+            self.person_cascade = None
     
     def detect_helmet(self, frame, person_bbox=None):
         """Detect helmet/hard hat using color-based detection"""
