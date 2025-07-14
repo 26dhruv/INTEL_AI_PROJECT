@@ -81,16 +81,11 @@ socketio = SocketIO(app, cors_allowed_origins=config.CORS_ORIGINS)
 # Initialize database with enhanced error handling
 db_manager = None
 
-# For Render deployment, try MongoDB but don't block startup
+# For Render deployment, skip MongoDB initialization to allow fast startup
 if os.getenv('FLASK_ENV') == 'production':
-    logger.info("🔄 Production mode: Attempting MongoDB connection (non-blocking)")
-    try:
-        db_manager = MongoDBManager(config)
-        logger.info("✅ MongoDB connected successfully")
-    except Exception as e:
-        logger.warning(f"⚠️ MongoDB connection failed in production: {e}")
-        logger.info("💡 Application will run without database - some features will be limited")
-        db_manager = None
+    logger.info("🚀 Production mode: Skipping MongoDB initialization for fast startup")
+    logger.info("💡 MongoDB will be initialized on first request (if needed)")
+    db_manager = None
 else:
     # Development mode - retry logic
     max_db_retries = 3
@@ -582,11 +577,23 @@ def verify_token(token):
 # =============================================================================
 
 def require_db(f):
-    """Decorator to check database availability"""
+    """Decorator to check database availability with lazy initialization"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not db_manager:
+        global db_manager
+        
+        # Lazy initialize MongoDB if not connected
+        if not db_manager and os.getenv('FLASK_ENV') == 'production':
+            try:
+                logger.info("🔄 Lazy initializing MongoDB connection...")
+                db_manager = MongoDBManager(config)
+                logger.info("✅ MongoDB connected successfully (lazy init)")
+            except Exception as e:
+                logger.error(f"❌ MongoDB lazy initialization failed: {e}")
+                return create_response(error='Database not available', status=503)
+        elif not db_manager:
             return create_response(error='Database not available', status=503)
+        
         return f(*args, **kwargs)
     return decorated_function
 
