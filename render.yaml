@@ -24,7 +24,8 @@ services:
       export PYTHONHASHSEED=random
       
       # Start with Gunicorn for production
-      gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class eventlet wsgi:app
+      # Use the PORT environment variable that Render provides
+      gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class eventlet --timeout 120 wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
