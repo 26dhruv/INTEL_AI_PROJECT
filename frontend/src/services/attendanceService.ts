@@ -20,6 +20,32 @@ export interface AttendanceStats {
   }>;
 }
 
+// Helper function for retry logic
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: unknown) {
+      if (i === maxRetries - 1) throw error;
+      
+      // Only retry on timeout or connection errors
+      const axiosError = error as { code?: string };
+      if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'NETWORK_ERROR') {
+        console.log(`Attempt ${i + 1} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      } else {
+        throw error; // Don't retry on other errors
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 export const attendanceService = {
   // Get attendance records
   async getAttendanceRecords(params?: {
@@ -28,7 +54,12 @@ export const attendanceService = {
     employee_id?: string;
   }): Promise<AttendanceRecord[]> {
     try {
-      const response = await api.get('/attendance', { params });
+      const response = await withRetry(() => 
+        api.get('/attendance', { 
+          params,
+          timeout: 30000 // Increase timeout to 30 seconds
+        })
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching attendance records:', error);
@@ -42,10 +73,24 @@ export const attendanceService = {
     end_date?: string;
   }): Promise<AttendanceStats> {
     try {
-      const response = await api.get('/attendance/stats', { params });
+      console.log('Fetching attendance stats with params:', params);
+      const response = await withRetry(() => 
+        api.get('/attendance/stats', { 
+          params,
+          timeout: 30000 // Increase timeout to 30 seconds
+        })
+      );
+      console.log('Successfully fetched attendance stats:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching attendance stats:', error);
+      const axiosError = error as { message?: string; code?: string; response?: { status?: number; data?: unknown } };
+      console.error('Error details:', {
+        message: axiosError.message,
+        code: axiosError.code,
+        status: axiosError.response?.status,
+        data: axiosError.response?.data
+      });
       throw error;
     }
   },

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Workforce Monitoring System - Backend Server
-Entry point for running the Flask application
+Simple startup script for Workforce Monitoring System Backend
+Run this to start the Flask application without Docker
 """
 
 import os
@@ -12,12 +12,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Set environment variables if not already set
-if not os.getenv('FLASK_ENV'):
-    os.environ['FLASK_ENV'] = 'development'
-
-if not os.getenv('FLASK_DEBUG'):
-    os.environ['FLASK_DEBUG'] = 'True'
+# Set environment variables for development
+os.environ.setdefault('FLASK_ENV', 'development')
+os.environ.setdefault('FLASK_DEBUG', 'True')
 
 def main():
     """Main entry point for the application"""
