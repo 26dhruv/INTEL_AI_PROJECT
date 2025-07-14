@@ -397,8 +397,13 @@ class MongoDBManager:
             face_encoding = None
             if face_image is not None:
                 try:
-                    import face_recognition
-                    import cv2
+                    # Lazy import to avoid memory issues
+                    try:
+                        import face_recognition
+                        import cv2
+                    except ImportError:
+                        logger.warning("face_recognition library not available, skipping face encoding")
+                        return True, f"Employee {employee_data['employee_id']} registered successfully (without face recognition)"
                     
                     # Ensure image is in the correct format
                     if face_image.dtype != np.uint8:
@@ -456,8 +461,6 @@ class MongoDBManager:
                             logger.error(f"Fallback face encoding failed: {fallback_error}")
                             return False, f"Face encoding extraction failed: {str(fallback_error)}"
                         
-                except ImportError:
-                    logger.warning("face_recognition library not available, skipping face encoding")
                 except Exception as e:
                     logger.error(f"Error processing face image: {e}")
                     return False, f"Face processing error: {str(e)}"

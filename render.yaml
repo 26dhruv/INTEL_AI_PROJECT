@@ -4,7 +4,26 @@ services:
     env: python
     plan: starter
     rootDir: backend
-    dockerfilePath: ./Dockerfile.render
+    buildCommand: |
+      # Memory optimization for build process
+      export PYTHONDONTWRITEBYTECODE=1
+      export PYTHONOPTIMIZE=1
+      export PIP_NO_CACHE_DIR=1
+      export PIP_DISABLE_PIP_VERSION_CHECK=1
+      
+      # Install dependencies with memory optimization (using simplified requirements)
+      pip install --no-cache-dir --compile --prefer-binary -r requirements.render.txt
+      
+      # Pre-compile Python files to reduce startup memory
+      python -m py_compile app_simple.py config.py mongodb_manager.py utils.py start_optimized.py
+    startCommand: |
+      # Memory optimization for runtime
+      export PYTHONOPTIMIZE=1
+      export PYTHONMALLOC=malloc
+      export PYTHONHASHSEED=random
+      
+      # Start with memory-optimized script
+      python -O start_optimized.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

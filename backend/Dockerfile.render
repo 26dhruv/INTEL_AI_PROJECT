@@ -1,7 +1,9 @@
-# Render-optimized Dockerfile for backend-only deployment
+# Render-optimized Dockerfile for Workforce Monitoring Backend
+# Uses simplified requirements to avoid memory issues
+
 FROM python:3.11-slim
 
-# Set environment variables for memory optimization
+# Set environment variables for optimization
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
@@ -12,8 +14,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install only essential system dependencies for lightweight packages
+# Install only essential system dependencies
 RUN apt-get update && apt-get install -y \
+    libopencv-dev \
+    python3-opencv \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
