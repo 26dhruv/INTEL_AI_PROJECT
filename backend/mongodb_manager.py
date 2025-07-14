@@ -54,39 +54,80 @@ class MongoDBManager:
             try:
                 # Enhanced connection options for Render deployment
                 connection_options = {
-                    'serverSelectionTimeoutMS': 30000,  # Increased timeout
-                    'connectTimeoutMS': 30000,          # Increased timeout
-                    'socketTimeoutMS': 30000,           # Socket timeout
-                    'maxPoolSize': 10,                  # Reduced pool size for Render
-                    'minPoolSize': 1,                   # Minimal pool size
-                    'maxIdleTimeMS': 60000,             # Increased idle time
-                    'waitQueueTimeoutMS': 10000,        # Queue timeout
+                    'serverSelectionTimeoutMS': 60000,  # Increased timeout for Render
+                    'connectTimeoutMS': 60000,          # Increased timeout
+                    'socketTimeoutMS': 60000,           # Socket timeout
+                    'maxPoolSize': 5,                   # Reduced pool size for Render
+                    'minPoolSize': 0,                   # Start with no connections
+                    'maxIdleTimeMS': 30000,             # Reduced idle time
+                    'waitQueueTimeoutMS': 15000,        # Queue timeout
                     'retryWrites': True,
                     'retryReads': True,
                     'directConnection': False,          # Allow connection pooling
                     'appName': 'WorkforceMonitoring',   # Application name for monitoring
+                    'compressors': 'zlib',              # Enable compression
+                    'zlibCompressionLevel': 6,          # Compression level
                 }
                 
-                # Add DNS resolution options for Render
+                # Try different connection strategies for Render
                 if os.getenv('FLASK_ENV') == 'production':
-                    connection_options.update({
-                        'serverSelectionTimeoutMS': 60000,  # Even longer timeout for production
-                        'connectTimeoutMS': 60000,
-                        'socketTimeoutMS': 60000,
-                    })
-                
-                # Use enhanced URI for better connection reliability
-                mongo_uri = getattr(self.config, 'get_enhanced_mongo_uri', lambda: self.config.MONGO_URI)()
-                self.client = MongoClient(mongo_uri, **connection_options)
-                
-                # Test connection with longer timeout
-                self.client.admin.command('ping', serverSelectionTimeoutMS=30000)
-                
-                # Get database
-                self.db = self.client[self.config.DATABASE_NAME]
-                
-                logger.info(f"✅ Connected to MongoDB: {self.config.DATABASE_NAME}")
-                return  # Success, exit retry loop
+                    # Strategy 1: Try with DNS resolution fixes
+                    try:
+                        mongo_uri = getattr(self.config, 'get_enhanced_mongo_uri', lambda: self.config.MONGO_URI)()
+                        self.client = MongoClient(mongo_uri, **connection_options)
+                        
+                        # Test connection
+                        self.client.admin.command('ping', serverSelectionTimeoutMS=30000)
+                        self.db = self.client[self.config.DATABASE_NAME]
+                        logger.info(f"✅ Connected to MongoDB (Strategy 1): {self.config.DATABASE_NAME}")
+                        return
+                    except Exception as e1:
+                        logger.warning(f"Strategy 1 failed: {e1}")
+                        
+                        # Strategy 2: Try with simplified URI and longer timeouts
+                        try:
+                            # Use base URI with minimal parameters
+                            base_uri = self.config.MONGO_URI.split('?')[0]  # Remove existing params
+                            simple_uri = f"{base_uri}?retryWrites=true&w=majority&serverSelectionTimeoutMS=90000&connectTimeoutMS=90000"
+                            
+                            connection_options.update({
+                                'serverSelectionTimeoutMS': 90000,
+                                'connectTimeoutMS': 90000,
+                                'socketTimeoutMS': 90000,
+                            })
+                            
+                            self.client = MongoClient(simple_uri, **connection_options)
+                            self.client.admin.command('ping', serverSelectionTimeoutMS=60000)
+                            self.db = self.client[self.config.DATABASE_NAME]
+                            logger.info(f"✅ Connected to MongoDB (Strategy 2): {self.config.DATABASE_NAME}")
+                            return
+                        except Exception as e2:
+                            logger.warning(f"Strategy 2 failed: {e2}")
+                            
+                            # Strategy 3: Try with direct connection
+                            try:
+                                connection_options.update({
+                                    'directConnection': True,
+                                    'serverSelectionTimeoutMS': 120000,
+                                    'connectTimeoutMS': 120000,
+                                })
+                                
+                                self.client = MongoClient(simple_uri, **connection_options)
+                                self.client.admin.command('ping', serverSelectionTimeoutMS=90000)
+                                self.db = self.client[self.config.DATABASE_NAME]
+                                logger.info(f"✅ Connected to MongoDB (Strategy 3): {self.config.DATABASE_NAME}")
+                                return
+                            except Exception as e3:
+                                logger.warning(f"Strategy 3 failed: {e3}")
+                                raise e3  # Re-raise the last error
+                else:
+                    # Development mode - use standard connection
+                    mongo_uri = getattr(self.config, 'get_enhanced_mongo_uri', lambda: self.config.MONGO_URI)()
+                    self.client = MongoClient(mongo_uri, **connection_options)
+                    self.client.admin.command('ping', serverSelectionTimeoutMS=30000)
+                    self.db = self.client[self.config.DATABASE_NAME]
+                    logger.info(f"✅ Connected to MongoDB: {self.config.DATABASE_NAME}")
+                    return
                 
             except ConnectionFailure as e:
                 logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1}/{max_retries} failed: {e}")

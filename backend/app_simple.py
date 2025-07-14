@@ -91,12 +91,13 @@ for attempt in range(max_db_retries):
     except Exception as e:
         logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1} failed: {e}")
         if attempt < max_db_retries - 1:
-            logger.info("🔄 Retrying MongoDB connection in 5 seconds...")
+            logger.info("🔄 Retrying MongoDB connection in 10 seconds...")
             import time
-            time.sleep(5)
+            time.sleep(10)
         else:
             logger.error(f"❌ MongoDB connection failed after {max_db_retries} attempts")
             logger.warning("⚠️ Application will run with limited functionality (no database)")
+            logger.info("💡 You can still test API endpoints that don't require database access")
             db_manager = None
 
 # Global camera state
@@ -617,6 +618,7 @@ def api_info():
         'version': '1.0.0',
         'status': 'running',
         'timestamp': datetime.now().isoformat(),
+        'database_status': 'connected' if db_manager else 'disconnected',
         'endpoints': {
             'health': '/api/health',
             'auth': '/api/auth/*',
@@ -626,7 +628,8 @@ def api_info():
             'camera': '/api/camera/*',
             'dashboard': '/api/dashboard/*'
         },
-        'documentation': 'API endpoints for Workforce Monitoring System'
+        'documentation': 'API endpoints for Workforce Monitoring System',
+        'note': 'Some endpoints may be limited if database is not connected'
     })
 
 @app.route('/api')
