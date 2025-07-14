@@ -1,75 +1,42 @@
 #!/usr/bin/env python3
 """
-Simple startup script for Workforce Monitoring System Backend
-Run this to start the Flask application without Docker
+Simple startup script for local development
 """
 
 import os
 import sys
-from pathlib import Path
+import logging
 
-# Add the project root to the Python path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-# Set environment variables for development
-os.environ.setdefault('FLASK_ENV', 'development')
-os.environ.setdefault('FLASK_DEBUG', 'True')
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def main():
-    """Main entry point for the application"""
+    """Main entry point for local development"""
+    logger.info("Starting Workforce Monitoring System (Local Development)")
+    
     try:
-        # Import after setting up the path
-        from backend.app_simple import app, socketio
-        from backend.config import get_config
+        # Add parent directory to path for imports
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
         
-        # Get configuration based on environment
-        config = get_config()
+        from backend.app_simple import app, socketio, config
         
-        print("🚀 Starting Workforce Monitoring System Backend")
-        print(f"📊 Environment: {os.getenv('FLASK_ENV', 'development')}")
-        print(f"🔧 Debug Mode: {config.DEBUG}")
-        print(f"🌐 Host: {config.HOST}")
-        print(f"🚪 Port: {config.PORT}")
-        print(f"🗄️  MongoDB URI: {config.MONGO_URI}")
-        print(f"📁 Data Directory: data/")
-        print("="*60)
-        print("🌐 API Endpoints Available:")
-        print("   • Health Check: GET /api/health")
-        print("   • Employees: GET|POST /api/employees")
-        print("   • Employee: GET|PUT|DELETE /api/employees/<id>")
-        print("   • Attendance: GET /api/attendance")
-        print("   • Attendance Stats: GET /api/attendance/stats")
-        print("   • Safety Events: GET /api/safety/events")
-        print("   • Safety Stats: GET /api/safety/stats")
-        print("   • Camera Control: POST /api/camera/start|stop")
-        print("   • Dashboard Stats: GET /api/dashboard/stats")
-        print("   • Recent Alerts: GET /api/dashboard/recent-alerts")
-        print("="*60)
-        print("🔄 WebSocket Events:")
-        print("   • face_detected - Real-time face recognition")
-        print("   • safety_event - Real-time safety violations")
-        print("="*60)
-        print("📱 Frontend Integration:")
-        print(f"   • React App: Served from /")
-        print(f"   • CORS Origins: {config.CORS_ORIGINS}")
-        print("="*60)
+        logger.info("✅ Application imported successfully")
         
-        # Start the application
+        # Run the application
+        logger.info(f"Starting server on {config.HOST}:{config.PORT}")
         socketio.run(
             app,
             host=config.HOST,
             port=config.PORT,
             debug=config.DEBUG,
-            use_reloader=config.DEBUG
+            use_reloader=True,  # Enable reloader for development
+            threaded=True
         )
         
-    except KeyboardInterrupt:
-        print("\n🛑 Shutting down server...")
-        sys.exit(0)
     except Exception as e:
-        print(f"❌ Failed to start server: {e}")
+        logger.error(f"Failed to start application: {e}")
         sys.exit(1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main() 

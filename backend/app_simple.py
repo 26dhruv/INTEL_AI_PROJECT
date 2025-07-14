@@ -7,7 +7,6 @@ A clean, organized Flask application with all core functionality maintained.
 import os
 import sys
 import gc
-import psutil
 import logging
 import threading
 from pathlib import Path
@@ -60,14 +59,7 @@ config = get_config()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Memory optimization: Log memory usage
-def log_memory_usage():
-    """Log current memory usage for monitoring"""
-    process = psutil.Process(os.getpid())
-    memory_info = process.memory_info()
-    logger.info(f"Memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
-
-log_memory_usage()
+logger.info("✅ Workforce Monitoring System starting up...")
 
 # =============================================================================
 # FLASK APP SETUP
