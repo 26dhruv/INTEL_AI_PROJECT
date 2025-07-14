@@ -6,7 +6,6 @@ Handles all database operations including employees, attendance, safety events, 
 
 import os
 import logging
-import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union
 from pymongo import MongoClient, IndexModel, ASCENDING, DESCENDING
@@ -401,6 +400,7 @@ class MongoDBManager:
                     try:
                         import face_recognition
                         import cv2
+                        import numpy as np
                     except ImportError:
                         logger.warning("face_recognition library not available, skipping face encoding")
                         return True, f"Employee {employee_data['employee_id']} registered successfully (without face recognition)"
