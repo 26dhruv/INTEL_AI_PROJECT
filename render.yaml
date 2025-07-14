@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: workforce-monitoring-system
+    env: python
+    buildCommand: ./build.sh
+    startCommand: cd backend && gunicorn --config gunicorn.render.conf.py app_simple:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DEBUG
+        value: False
+      - key: MONGO_URI
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"
+      - key: PORT
+        value: "10000"
+    region: oregon
+    plan: starter
+    buildFilter:
+      paths:
+        - backend/**
+        - frontend/**
+        - build.sh
+        - render.yaml
+    autoDeploy: true
+    disk:
+      name: workforce-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1 
