@@ -1,0 +1,28 @@
+# Core Flask dependencies (lightweight)
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+python-socketio==5.8.0
+
+# Database and utilities
+pymongo==4.5.0
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+
+# Image processing (minimal)
+pillow==10.0.1
+
+# Computer vision (minimal for Render)
+numpy==1.24.3
+opencv-python-headless==4.8.1.78
+
+# Authentication
+bcrypt==4.0.1
+PyJWT==2.8.0
+
+# System monitoring
+psutil==5.9.5
+
+# Note: Heavy ML packages (face_recognition, dlib, torch, ultralytics) 
+# are excluded for Render deployment to reduce memory usage
+# These can be added later if needed for specific features 

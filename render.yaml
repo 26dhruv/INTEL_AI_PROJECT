@@ -1,37 +1,80 @@
 services:
   - type: web
-    name: workforce-monitoring-system
+    name: workforce-monitoring-backend
     env: python
-    buildCommand: ./build.sh
-    startCommand: cd backend && gunicorn --config gunicorn.render.conf.py app_simple:app
-    healthCheckPath: /api/health
+    plan: starter
+    buildCommand: |
+      # Memory optimization for build process
+      export PYTHONDONTWRITEBYTECODE=1
+      export PYTHONOPTIMIZE=1
+      export PIP_NO_CACHE_DIR=1
+      export PIP_DISABLE_PIP_VERSION_CHECK=1
+      
+      # Install dependencies with memory optimization (using simplified requirements)
+      pip install --no-cache-dir --compile --prefer-binary -r backend/requirements.render.txt
+      
+      # Pre-compile Python files to reduce startup memory
+      python -m py_compile backend/app_simple.py backend/config.py backend/mongodb_manager.py backend/utils.py backend/start_optimized.py
+    startCommand: |
+      # Memory optimization for runtime
+      export PYTHONOPTIMIZE=1
+      export PYTHONMALLOC=malloc
+      export PYTHONHASHSEED=random
+      
+      # Start with memory-optimized script
+      cd backend && python -O start_optimized.py
     envVars:
-      - key: FLASK_ENV
-        value: production
-      - key: DEBUG
-        value: False
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PYTHONDONTWRITEBYTECODE
+        value: 1
+      - key: PYTHONOPTIMIZE
+        value: 1
+      - key: PYTHONMALLOC
+        value: malloc
+      - key: PIP_NO_CACHE_DIR
+        value: 1
+      - key: PIP_DISABLE_PIP_VERSION_CHECK
+        value: 1
       - key: MONGO_URI
         sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: DEBUG
+        value: false
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
       - key: CORS_ORIGINS
         value: "*"
-      - key: PYTHONPATH
-        value: "/opt/render/project/src"
-      - key: PORT
-        value: "10000"
-    region: oregon
-    plan: starter
-    buildFilter:
-      paths:
-        - backend/**
-        - frontend/**
-        - build.sh
-        - render.yaml
-    autoDeploy: true
-    disk:
-      name: workforce-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1 
+      - key: DATABASE_NAME
+        value: workforce_monitoring
+      - key: MAX_CONTENT_LENGTH
+        value: 16777216
+      - key: FACE_RECOGNITION_MODEL
+        value: hog
+      - key: FACE_RECOGNITION_TOLERANCE
+        value: 0.6
+      - key: SAFETY_CONFIDENCE_THRESHOLD
+        value: 0.7
+      - key: CAMERA_INDEX
+        value: 0
+      - key: CAMERA_WIDTH
+        value: 640
+      - key: CAMERA_HEIGHT
+        value: 480
+      - key: CAMERA_FPS
+        value: 30
+      - key: WEBSOCKET_ASYNC_MODE
+        value: threading
+      - key: DEFAULT_ADMIN_USERNAME
+        value: admin
+      - key: DEFAULT_ADMIN_PASSWORD
+        value: admin123
+      - key: DEFAULT_ADMIN_EMAIL
+        value: admin@workforce.com 

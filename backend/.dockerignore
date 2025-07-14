@@ -4,18 +4,30 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
-.venv/
-
-# Environment files
-.env.local
-.env.development
-.env.test
-.env.production
+workforce_venv/
 
 # IDE
 .vscode/
@@ -38,10 +50,17 @@ Thumbs.db
 logs/
 backend.log
 
-# Data directories (will be created in container)
-data/uploads/
-data/employee_images/
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/workforce.db
+
+# Temporary files
 temp/
+tmp/
+*.tmp
+*.temp
 
 # Git
 .git/
@@ -51,29 +70,46 @@ temp/
 README.md
 *.md
 
-# Testing
-tests/
-test_*.py
-*_test.py
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
 
-# Coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
 
-# Virtual environments
-workforce_venv/
-*/workforce_venv/
+# Node modules (if any)
+node_modules/
 
 # Build artifacts
 build/
 dist/
-*.egg-info/
+*.tar.gz
+*.zip
 
-# Jupyter
+# Test files
+tests/
+test_*
+*_test.py
+.coverage
+.pytest_cache/
+
+# Jupyter notebooks
+*.ipynb
 .ipynb_checkpoints/
 
-# Docker
-Dockerfile.dev
-docker-compose.yml
-docker-compose.dev.yml 
+# Large data files
+*.csv
+*.json
+*.xml
+*.yaml
+*.yml
+data/
+uploads/
+employee_images/
+face_encodings.pkl
+ppe_model.pt 

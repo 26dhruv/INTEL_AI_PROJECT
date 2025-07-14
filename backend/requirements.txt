@@ -1,16 +1,30 @@
-Flask>=2.3.0
-Flask-CORS>=4.0.0
-Flask-SocketIO>=5.3.0
-python-socketio>=5.8.0
-opencv-python>=4.8.0
-numpy>=1.24.0
-pandas>=2.0.0
-pillow>=10.0.0
-pymongo>=4.5.0
-face-recognition>=1.3.0
-dlib>=19.24.0
-ultralytics>=8.0.0
-torch>=2.0.0
-torchvision>=0.15.0
-python-dateutil>=2.8.0
-python-dotenv>=1.0.0 
+# Core Flask dependencies
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+python-socketio==5.8.0
+
+# Database and utilities
+pymongo==4.5.0
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+
+# Image processing (lighter versions)
+pillow==10.0.1
+pandas==2.0.3
+
+# Computer vision and ML (optimized versions)
+numpy==1.24.3
+opencv-python==4.8.1.78
+face-recognition==1.3.0
+dlib==19.24.2
+
+# PyTorch ecosystem (CPU-only versions for memory efficiency)
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+ultralytics==8.0.196
+
+# Additional dependencies
+bcrypt==4.0.1
+PyJWT==2.8.0
+psutil==5.9.5 

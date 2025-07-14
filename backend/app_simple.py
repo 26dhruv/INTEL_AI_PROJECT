@@ -6,16 +6,40 @@ A clean, organized Flask application with all core functionality maintained.
 
 import os
 import sys
-import cv2
+import gc
+import psutil
+import logging
+import threading
+from pathlib import Path
+
+# Memory optimization: Set garbage collection thresholds
+gc.set_threshold(700, 10, 10)
+
+# Memory optimization: Import heavy libraries lazily
+def import_cv2():
+    """Lazy import of OpenCV to reduce startup memory usage"""
+    import cv2
+    return cv2
+
+def import_numpy():
+    """Lazy import of numpy to reduce startup memory usage"""
+    import numpy as np
+    return np
+
+def import_face_recognition():
+    """Lazy import of face_recognition to reduce startup memory usage"""
+    try:
+        import face_recognition
+        return face_recognition
+    except ImportError:
+        return None
+
+# Import lighter dependencies first
 import jwt
 import time
 import json
 import base64
 import bcrypt
-import logging
-import threading
-import numpy as np
-from pathlib import Path
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, Response
@@ -35,6 +59,15 @@ from backend.config import Config, get_config
 config = get_config()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Memory optimization: Log memory usage
+def log_memory_usage():
+    """Log current memory usage for monitoring"""
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    logger.info(f"Memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
+
+log_memory_usage()
 
 # =============================================================================
 # FLASK APP SETUP
@@ -80,6 +113,9 @@ class RealFaceRecognitionSystem:
         self.known_face_names = []
         self.known_employee_ids = []
         
+        # Lazy load OpenCV
+        cv2 = import_cv2()
+        
         # Initialize OpenCV face detector
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         
@@ -103,13 +139,14 @@ class RealFaceRecognitionSystem:
                         self.known_employee_ids.append(emp['employee_id'])
                         self.known_face_names.append(emp['name'])
                         # Convert list back to numpy array
+                        np = import_numpy()
                         self.known_face_encodings.append(np.array(emp['face_encoding']))
                 
                 logger.info(f"Loaded {len(self.known_face_names)} employees with face encodings for recognition")
         except Exception as e:
             logger.error(f"Error loading employees: {e}")
     
-    def register_employee(self, name: str, employee_id: str, face_image: np.ndarray) -> bool:
+    def register_employee(self, name: str, employee_id: str, face_image) -> bool:
         """Register a new employee for face recognition"""
         try:
             if employee_id not in self.known_employee_ids:
@@ -117,6 +154,7 @@ class RealFaceRecognitionSystem:
                 self.known_face_names.append(name)
                 # In a real system, you'd extract face encodings from the image
                 # For now, create a dummy encoding
+                np = import_numpy()
                 self.known_face_encodings.append(np.random.random(128))
                 logger.info(f"Registered employee {name} ({employee_id}) for face recognition")
                 return True
@@ -130,6 +168,7 @@ class RealFaceRecognitionSystem:
     def detect_faces(self, frame):
         """Detect faces in frame using OpenCV"""
         try:
+            cv2 = import_cv2()
             # Convert to grayscale for face detection
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
@@ -150,7 +189,25 @@ class RealFaceRecognitionSystem:
     def recognize_faces(self, frame):
         """Recognize faces in frame and return results"""
         try:
-            import face_recognition
+            face_recognition = import_face_recognition()
+            cv2 = import_cv2()
+            
+            if face_recognition is None:
+                logger.error("face_recognition library not available, falling back to OpenCV detection")
+                # Fallback to OpenCV detection without recognition
+                faces = self.detect_faces(frame)
+                results = []
+                
+                for (x, y, w, h) in faces:
+                    results.append({
+                        "employee_id": "UNKNOWN",
+                        "name": "Unknown Person",
+                        "confidence": 0.0,
+                        "bbox": (x, y, w, h),
+                        "timestamp": datetime.now().isoformat()
+                    })
+                
+                return results
             
             # Convert BGR to RGB for face_recognition
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -194,22 +251,6 @@ class RealFaceRecognitionSystem:
                 })
             
             return results
-        except ImportError:
-            logger.error("face_recognition library not available, falling back to OpenCV detection")
-            # Fallback to OpenCV detection without recognition
-            faces = self.detect_faces(frame)
-            results = []
-            
-            for (x, y, w, h) in faces:
-                results.append({
-                    "employee_id": "UNKNOWN",
-                    "name": "Unknown Person",
-                    "confidence": 0.0,
-                    "bbox": (x, y, w, h),
-                    "timestamp": datetime.now().isoformat()
-                })
-            
-            return results
         except Exception as e:
             logger.error(f"Error recognizing faces: {e}")
             return []
@@ -226,6 +267,7 @@ class RealSafetyMonitor:
     def initialize_detectors(self):
         """Initialize OpenCV cascade classifiers for detection"""
         try:
+            cv2 = import_cv2()
             # Load pre-trained cascade classifiers
             self.person_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
             # For helmet detection, we'll use color-based detection since OpenCV doesn't have a pre-trained helmet cascade
@@ -236,6 +278,9 @@ class RealSafetyMonitor:
     def detect_helmet(self, frame, person_bbox=None):
         """Detect helmet/hard hat using color-based detection"""
         try:
+            cv2 = import_cv2()
+            np = import_numpy()
+            
             # Convert to HSV for better color detection
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             
@@ -293,6 +338,9 @@ class RealSafetyMonitor:
     def detect_safety_vest(self, frame, person_bbox=None):
         """Detect safety vest using color-based detection"""
         try:
+            cv2 = import_cv2()
+            np = import_numpy()
+            
             # Convert to HSV for better color detection
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             
@@ -347,6 +395,7 @@ class RealSafetyMonitor:
     def detect_person(self, frame):
         """Detect person in frame"""
         try:
+            cv2 = import_cv2()
             # First try cascade classifier
             if self.person_cascade is not None:
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
