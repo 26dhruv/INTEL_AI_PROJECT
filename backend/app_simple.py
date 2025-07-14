@@ -80,25 +80,37 @@ socketio = SocketIO(app, cors_allowed_origins=config.CORS_ORIGINS)
 
 # Initialize database with enhanced error handling
 db_manager = None
-max_db_retries = 3
 
-for attempt in range(max_db_retries):
+# For Render deployment, try MongoDB but don't block startup
+if os.getenv('FLASK_ENV') == 'production':
+    logger.info("🔄 Production mode: Attempting MongoDB connection (non-blocking)")
     try:
-        logger.info(f"🔄 Attempting MongoDB connection (attempt {attempt + 1}/{max_db_retries})")
         db_manager = MongoDBManager(config)
         logger.info("✅ MongoDB connected successfully")
-        break
     except Exception as e:
-        logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1} failed: {e}")
-        if attempt < max_db_retries - 1:
-            logger.info("🔄 Retrying MongoDB connection in 10 seconds...")
-            import time
-            time.sleep(10)
-        else:
-            logger.error(f"❌ MongoDB connection failed after {max_db_retries} attempts")
-            logger.warning("⚠️ Application will run with limited functionality (no database)")
-            logger.info("💡 You can still test API endpoints that don't require database access")
-            db_manager = None
+        logger.warning(f"⚠️ MongoDB connection failed in production: {e}")
+        logger.info("💡 Application will run without database - some features will be limited")
+        db_manager = None
+else:
+    # Development mode - retry logic
+    max_db_retries = 3
+    for attempt in range(max_db_retries):
+        try:
+            logger.info(f"🔄 Attempting MongoDB connection (attempt {attempt + 1}/{max_db_retries})")
+            db_manager = MongoDBManager(config)
+            logger.info("✅ MongoDB connected successfully")
+            break
+        except Exception as e:
+            logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1} failed: {e}")
+            if attempt < max_db_retries - 1:
+                logger.info("🔄 Retrying MongoDB connection in 10 seconds...")
+                import time
+                time.sleep(10)
+            else:
+                logger.error(f"❌ MongoDB connection failed after {max_db_retries} attempts")
+                logger.warning("⚠️ Application will run with limited functionality (no database)")
+                logger.info("💡 You can still test API endpoints that don't require database access")
+                db_manager = None
 
 # Global camera state
 camera_state = {

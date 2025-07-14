@@ -23,9 +23,13 @@ services:
       export PYTHONMALLOC=malloc
       export PYTHONHASHSEED=random
       
-      # Start with Gunicorn for production
-      # Use the PORT environment variable that Render provides
-      gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class eventlet --timeout 120 wsgi:app
+      # Debug: Show what we're running
+      echo "🚀 Starting Workforce Monitoring System on port $PORT"
+      echo "📁 Current directory: $(pwd)"
+      echo "📄 Files in directory: $(ls -la)"
+      
+      # Start with simple Python script for Render
+      python start_render.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

@@ -48,7 +48,9 @@ def main():
         logger.info("✅ Application imported successfully")
         
         # Run the application
-        logger.info(f"Starting server on {config.HOST}:{config.PORT}")
+        # Use PORT environment variable if available (for Render)
+        port = int(os.getenv('PORT', config.PORT))
+        logger.info(f"Starting server on {config.HOST}:{port}")
         
         # Use Gunicorn for production deployment
         if os.getenv('FLASK_ENV') == 'production':
@@ -57,7 +59,7 @@ def main():
             # The socketio.run() is only for development
             app.run(
                 host=config.HOST,
-                port=config.PORT,
+                port=port,
                 debug=False
             )
         else:
@@ -65,7 +67,7 @@ def main():
             socketio.run(
                 app,
                 host=config.HOST,
-                port=config.PORT,
+                port=port,
                 debug=config.DEBUG,
                 use_reloader=False,  # Disable reloader to save memory
                 allow_unsafe_werkzeug=True  # Allow Werkzeug in production for Render
