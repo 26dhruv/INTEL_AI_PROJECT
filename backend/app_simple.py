@@ -78,13 +78,26 @@ socketio = SocketIO(app, cors_allowed_origins=config.CORS_ORIGINS)
 # SYSTEM COMPONENTS
 # =============================================================================
 
-# Initialize database
-try:
-    db_manager = MongoDBManager(config)
-    logger.info("✅ MongoDB connected successfully")
-except Exception as e:
-    logger.error(f"❌ MongoDB connection failed: {e}")
-    db_manager = None
+# Initialize database with enhanced error handling
+db_manager = None
+max_db_retries = 3
+
+for attempt in range(max_db_retries):
+    try:
+        logger.info(f"🔄 Attempting MongoDB connection (attempt {attempt + 1}/{max_db_retries})")
+        db_manager = MongoDBManager(config)
+        logger.info("✅ MongoDB connected successfully")
+        break
+    except Exception as e:
+        logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1} failed: {e}")
+        if attempt < max_db_retries - 1:
+            logger.info("🔄 Retrying MongoDB connection in 5 seconds...")
+            import time
+            time.sleep(5)
+        else:
+            logger.error(f"❌ MongoDB connection failed after {max_db_retries} attempts")
+            logger.warning("⚠️ Application will run with limited functionality (no database)")
+            db_manager = None
 
 # Global camera state
 camera_state = {
@@ -632,14 +645,48 @@ def api_root():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
+    # Check database health
+    db_status = {
+        'connected': db_manager is not None,
+        'details': 'Not connected'
+    }
+    
+    if db_manager:
+        try:
+            # Test database connection
+            db_health = db_manager.health_check()
+            db_status.update({
+                'connected': True,
+                'details': 'Connected and healthy',
+                'collections': db_health.get('collections', {}),
+                'database_stats': {
+                    'collections': db_health.get('stats', {}).get('collections', 0),
+                    'data_size': db_health.get('stats', {}).get('dataSize', 0),
+                    'storage_size': db_health.get('stats', {}).get('storageSize', 0)
+                }
+            })
+        except Exception as e:
+            db_status.update({
+                'connected': False,
+                'details': f'Connection error: {str(e)}',
+                'error': str(e)
+            })
+    
     return create_response({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
+        'environment': os.getenv('FLASK_ENV', 'development'),
         'services': {
-            'mongodb': db_manager is not None,
+            'mongodb': db_status,
             'face_recognition': face_system is not None,
             'safety_monitoring': safety_monitor is not None,
             'camera': camera_state['is_running']
+        },
+        'system_info': {
+            'python_version': sys.version,
+            'platform': os.name,
+            'host': config.HOST,
+            'port': config.PORT
         }
     })
 

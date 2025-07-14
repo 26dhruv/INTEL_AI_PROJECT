@@ -15,6 +15,21 @@ class Config:
     MONGO_URI = os.getenv('MONGO_URI', 'mongodb+srv://dhruv:O87jTJsEnJhDwMWP@patrolmonitoring.drkoji9.mongodb.net/?retryWrites=true&w=majority&appName=PatrolMonitoring')
     DATABASE_NAME = os.getenv('DATABASE_NAME', 'workforce_monitoring')
     
+    @classmethod
+    def get_enhanced_mongo_uri(cls):
+        """Get MongoDB URI with enhanced connection options for Render deployment"""
+        base_uri = cls.MONGO_URI
+        
+        # Add connection options for better reliability
+        if '?' in base_uri:
+            # URI already has query parameters
+            enhanced_uri = f"{base_uri}&serverSelectionTimeoutMS=60000&connectTimeoutMS=60000&socketTimeoutMS=60000&maxPoolSize=10&minPoolSize=1&maxIdleTimeMS=60000&waitQueueTimeoutMS=10000&retryReads=true&directConnection=false"
+        else:
+            # URI has no query parameters
+            enhanced_uri = f"{base_uri}?serverSelectionTimeoutMS=60000&connectTimeoutMS=60000&socketTimeoutMS=60000&maxPoolSize=10&minPoolSize=1&maxIdleTimeMS=60000&waitQueueTimeoutMS=10000&retryReads=true&directConnection=false"
+        
+        return enhanced_uri
+    
     # Collections
     EMPLOYEES_COLLECTION = 'employees'
     ATTENDANCE_COLLECTION = 'attendance'

@@ -46,33 +46,67 @@ class MongoDBManager:
         self.setup_default_data()
     
     def connect(self):
-        """Establish connection to MongoDB"""
-        try:
-            self.client = MongoClient(
-                self.config.MONGO_URI,
-                serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=10000,
-                maxPoolSize=50,
-                minPoolSize=10,
-                maxIdleTimeMS=30000,
-                waitQueueTimeoutMS=5000,
-                retryWrites=True
-            )
-            
-            # Test connection
-            self.client.admin.command('ping')
-            
-            # Get database
-            self.db = self.client[self.config.DATABASE_NAME]
-            
-            logger.info(f"✅ Connected to MongoDB: {self.config.DATABASE_NAME}")
-            
-        except ConnectionFailure as e:
-            logger.error(f"❌ MongoDB connection failed: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"❌ Database setup error: {e}")
-            raise
+        """Establish connection to MongoDB with enhanced error handling and retry logic"""
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                # Enhanced connection options for Render deployment
+                connection_options = {
+                    'serverSelectionTimeoutMS': 30000,  # Increased timeout
+                    'connectTimeoutMS': 30000,          # Increased timeout
+                    'socketTimeoutMS': 30000,           # Socket timeout
+                    'maxPoolSize': 10,                  # Reduced pool size for Render
+                    'minPoolSize': 1,                   # Minimal pool size
+                    'maxIdleTimeMS': 60000,             # Increased idle time
+                    'waitQueueTimeoutMS': 10000,        # Queue timeout
+                    'retryWrites': True,
+                    'retryReads': True,
+                    'directConnection': False,          # Allow connection pooling
+                    'appName': 'WorkforceMonitoring',   # Application name for monitoring
+                }
+                
+                # Add DNS resolution options for Render
+                if os.getenv('FLASK_ENV') == 'production':
+                    connection_options.update({
+                        'serverSelectionTimeoutMS': 60000,  # Even longer timeout for production
+                        'connectTimeoutMS': 60000,
+                        'socketTimeoutMS': 60000,
+                    })
+                
+                # Use enhanced URI for better connection reliability
+                mongo_uri = getattr(self.config, 'get_enhanced_mongo_uri', lambda: self.config.MONGO_URI)()
+                self.client = MongoClient(mongo_uri, **connection_options)
+                
+                # Test connection with longer timeout
+                self.client.admin.command('ping', serverSelectionTimeoutMS=30000)
+                
+                # Get database
+                self.db = self.client[self.config.DATABASE_NAME]
+                
+                logger.info(f"✅ Connected to MongoDB: {self.config.DATABASE_NAME}")
+                return  # Success, exit retry loop
+                
+            except ConnectionFailure as e:
+                logger.warning(f"⚠️ MongoDB connection attempt {attempt + 1}/{max_retries} failed: {e}")
+                if attempt < max_retries - 1:
+                    logger.info(f"🔄 Retrying in {retry_delay} seconds...")
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(f"❌ MongoDB connection failed after {max_retries} attempts")
+                    raise
+            except Exception as e:
+                logger.error(f"❌ Database setup error: {e}")
+                if attempt < max_retries - 1:
+                    logger.info(f"🔄 Retrying in {retry_delay} seconds...")
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                else:
+                    raise
     
     def setup_collections(self):
         """Setup database collections"""
