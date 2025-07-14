@@ -6,6 +6,7 @@ python-socketio>=5.8.0
 
 # Database
 pymongo>=4.5.0
+dnspython>=2.2.1
 
 # Basic image processing (lighter than full OpenCV)
 opencv-python-headless>=4.8.0

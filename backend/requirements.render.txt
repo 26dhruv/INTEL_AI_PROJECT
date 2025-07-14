@@ -19,6 +19,7 @@ opencv-python-headless==4.8.1.78
 # Authentication
 bcrypt==4.0.1
 PyJWT==2.8.0
+dnspython>=2.2.1
 
 # Production WSGI Server
 gunicorn==21.2.0
