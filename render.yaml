@@ -4,6 +4,7 @@ services:
     env: python
     plan: starter
     rootDir: backend
+    # Note: Using buildCommand instead of Dockerfile for memory optimization
     buildCommand: |
       # Memory optimization for build process
       export PYTHONDONTWRITEBYTECODE=1
