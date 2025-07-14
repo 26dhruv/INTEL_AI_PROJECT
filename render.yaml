@@ -3,6 +3,7 @@ services:
     name: workforce-monitoring-backend
     env: python
     plan: starter
+    rootDir: backend
     buildCommand: |
       # Memory optimization for build process
       export PYTHONDONTWRITEBYTECODE=1
@@ -11,10 +12,10 @@ services:
       export PIP_DISABLE_PIP_VERSION_CHECK=1
       
       # Install dependencies with memory optimization (using simplified requirements)
-      pip install --no-cache-dir --compile --prefer-binary -r backend/requirements.render.txt
+      pip install --no-cache-dir --compile --prefer-binary -r requirements.render.txt
       
       # Pre-compile Python files to reduce startup memory
-      python -m py_compile backend/app_simple.py backend/config.py backend/mongodb_manager.py backend/utils.py backend/start_optimized.py
+      python -m py_compile app_simple.py config.py mongodb_manager.py utils.py start_optimized.py
     startCommand: |
       # Memory optimization for runtime
       export PYTHONOPTIMIZE=1
@@ -22,7 +23,7 @@ services:
       export PYTHONHASHSEED=random
       
       # Start with memory-optimized script
-      cd backend && python -O start_optimized.py
+      python -O start_optimized.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
