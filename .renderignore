@@ -1,0 +1,58 @@
+# Ignore frontend completely - will be hosted separately
+frontend/
+frontend/**
+
+# Ignore build artifacts and temporary files
+build.sh
+build_optimized.sh
+*.log
+logs/
+temp/
+
+# Ignore development files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignore documentation and config files not needed for backend
+README.md
+*.md
+.git/
+.gitignore
+
+# Ignore Docker files (not needed for Render)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Ignore virtual environments
+workforce_venv/
+venv/
+env/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test files
+tests/
+test_*
+*_test.py
+.coverage
+.pytest_cache/
+
+# Ignore large data files
+*.csv
+*.json
+*.xml
+*.yaml
+*.yml
+data/workforce.db 

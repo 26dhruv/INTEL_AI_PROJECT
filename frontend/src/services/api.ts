@@ -1,15 +1,18 @@
 import axios from 'axios';
-import { getApiConfig } from '../config/api.config';
 
-// Get API configuration for current environment
-const apiConfig = getApiConfig();
+// Base API configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.MODE === 'production' 
+    ? '/api'  // Production: Use relative path
+    : 'http://localhost:5001/api'  // Development: Use localhost
+);
 
 const api = axios.create({
-  baseURL: apiConfig.baseURL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: apiConfig.timeout,
+  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000, // Use env var or default to 30 seconds
 });
 
 // Request interceptor for adding auth tokens if needed

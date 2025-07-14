@@ -600,25 +600,38 @@ def handle_exceptions(f):
     return decorated_function
 
 # =============================================================================
-# STATIC FILE SERVING
+# API ROUTES ONLY (Frontend hosted separately)
 # =============================================================================
 
 @app.route('/')
-def serve_react_app():
-    return send_from_directory(app.static_folder, 'index.html')
+def api_info():
+    """API information endpoint"""
+    return create_response({
+        'name': 'Workforce Monitoring API',
+        'version': '1.0.0',
+        'status': 'running',
+        'timestamp': datetime.now().isoformat(),
+        'endpoints': {
+            'health': '/api/health',
+            'auth': '/api/auth/*',
+            'employees': '/api/employees/*',
+            'attendance': '/api/attendance/*',
+            'safety': '/api/safety/*',
+            'camera': '/api/camera/*',
+            'dashboard': '/api/dashboard/*'
+        },
+        'documentation': 'API endpoints for Workforce Monitoring System'
+    })
 
-@app.route('/<path:path>')
-def serve_react_assets(path):
-    try:
-        # If it's an API route, let it be handled by the API
-        if path.startswith('api/'):
-            return "Not found", 404
-        
-        # Try to serve the static file
-        return send_from_directory(app.static_folder, path)
-    except:
-        # If file not found, serve index.html (for React Router)
-        return send_from_directory(app.static_folder, 'index.html')
+@app.route('/api')
+def api_root():
+    """API root endpoint"""
+    return create_response({
+        'message': 'Workforce Monitoring API',
+        'version': '1.0.0',
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    })
 
 # =============================================================================
 # HEALTH CHECK
