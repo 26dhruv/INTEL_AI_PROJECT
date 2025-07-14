@@ -1,0 +1,10 @@
+# Redirects for Single Page Application (SPA) routing
+# This file tells Render to serve index.html for all non-API routes
+# so React Router can handle client-side routing
+
+# API routes should be proxied to backend (if needed)
+/api/*  /api/:splat  200
+
+# All other routes should serve the main index.html file
+# so React Router can handle them client-side
+/*  /index.html  200 
